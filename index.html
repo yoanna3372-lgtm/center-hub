@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>센터장 업무허브</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1f2933;--mute:#6b7785;--line:#e3e7ec;--pri:#2f5bea;--ok:#1c9a5b;--warn:#d98a00;--todo:#8a94a3}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Pretendard","Malgun Gothic",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+header{background:var(--pri);color:#fff;padding:18px 24px}
+header h1{margin:0;font-size:20px}
+header p{margin:4px 0 0;opacity:.85;font-size:12px}
+nav{display:flex;gap:4px;padding:0 24px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{border:0;background:none;padding:14px 16px;font-size:14px;cursor:pointer;color:var(--mute);border-bottom:3px solid transparent;white-space:nowrap;font-family:inherit}
+nav button.on{color:var(--pri);border-color:var(--pri);font-weight:700}
+main{max-width:1000px;margin:0 auto;padding:20px 24px 60px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.hubcard{cursor:pointer}.hubcard:hover{border-color:var(--pri)}
+.hubcard h3{margin:0 0 6px;font-size:16px}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:10px 0 4px}
+.bar i{display:block;height:100%;background:var(--ok)}
+.mute{color:var(--mute);font-size:12px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.toolbar .sp{flex:1}
+button.btn{background:var(--pri);color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer;font-family:inherit;font-size:13px}
+button.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+select,input,textarea{font-family:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;width:100%}
+.row{display:grid;grid-template-columns:96px 1fr auto;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.row:last-child{border:0}
+.row .d{font-weight:700;font-size:13px}
+.row .t{font-weight:600}
+.badge{font-size:11px;padding:3px 9px;border-radius:99px;color:#fff;cursor:pointer;border:0;font-family:inherit}
+.s-예정{background:var(--todo)}.s-진행중{background:var(--warn)}.s-완료{background:var(--ok)}
+.icon{border:0;background:none;cursor:pointer;color:var(--mute);font-size:14px}
+.empty{padding:30px;text-align:center;color:var(--mute)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.cal div{background:#fff;min-height:104px;padding:4px;font-size:11px}
+.cal .h{min-height:auto;text-align:center;background:#f0f2f5;font-weight:700;padding:6px}
+.cal .n{color:var(--mute)}
+.cal .ev{background:#e8eefc;color:#1e3fa8;border-radius:4px;padding:1px 4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.cal .ev.s-완료{background:#dff3e8;color:#14724a;text-decoration:line-through}
+.cal .ev.w{white-space:normal;line-height:1.3}
+.cal .ev.l0{background:#dce6f2;color:#1b3a63}.cal .ev.l1{background:#e3efd3;color:#2d5a14}.cal .ev.l2{background:#f3e1f5;color:#5d2a66}
+.cal .ev.edu{background:#fff4b8;color:#5c4a00;border-top:1px dashed #c9b84a}
+.cal .ev.r0{background:#fff4b8;color:#5c4a00}.cal .ev.r1{background:#d9f0d0;color:#25561a}.cal .ev.r2{background:#bfe6f7;color:#0d4a68}
+.cal .ev.rall{background:#fde3e3;color:#c00;font-weight:700;text-align:center;padding:8px 4px}
+.cal.rg{grid-template-columns:70px repeat(5,1fr) .5fr .5fr}
+.cal.rg div{min-height:44px}
+.cal.rg .ev{min-height:0}
+.cal.rg .dh{background:#f0f2f5;font-weight:700;min-height:0;padding:3px 6px}
+.cal.rg .lb{display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+.cal.rg .lb.r0{background:#ffe94d}.cal.rg .lb.r1{background:#8fdc8a}.cal.rg .lb.r2{background:#63c7f0}.cal.rg .lb.lrall{background:#fde3e3;color:#c00}
+#login{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:50}
+.legend{display:flex;gap:6px;font-size:11px}.legend span{padding:2px 8px;border-radius:99px}
+.cal .ev.etc{background:#fde3e3;color:#c00;text-align:center}
+.cal .ev.s-완료{background:#dff3e8;color:#14724a;text-decoration:line-through}
+.trn{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.trn input{width:240px}
+.grp{display:none}.grp.on{display:block}
+dialog{border:0;border-radius:14px;padding:20px;width:min(440px,92vw);box-shadow:0 10px 40px #0004}
+dialog::backdrop{background:#0006}
+dialog label{display:block;margin:10px 0 4px;font-size:12px;color:var(--mute)}
+.foot{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+#status{font-size:11px;opacity:.8}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏢 센터장 업무허브</h1>
+  <p>신입지점장 OJT · 신입매니저 OJT · 월간활동일정 — 접속한 모두가 함께 수정할 수 있습니다 <span id="status">(연결 중…)</span> <a href="#" id="out" style="color:#fff;margin-left:8px"></a></p>
+</header>
+<nav id="nav"></nav>
+<main id="main"></main>
+
+<div id="login"><form id="lf" class="card" style="width:min(340px,90vw)">
+  <h2 style="margin:0 0 4px">🏢 센터장 업무허브</h2><div class="mute" style="margin-bottom:12px">로그인 후 이용할 수 있습니다</div>
+  <label class="mute">아이디</label><input id="lid" autocomplete="username">
+  <label class="mute" style="display:block;margin-top:10px">비밀번호</label><input id="lpw" type="password" autocomplete="current-password">
+  <div id="lerr" style="color:#c00;font-size:12px;min-height:18px;margin-top:6px"></div>
+  <button class="btn" style="width:100%" type="submit">로그인</button>
+</form></div>
+
+<dialog id="dlg">
+  <h3 id="dlgTitle" style="margin:0 0 4px">일정 추가</h3>
+  <label>날짜</label><input type="date" id="fDate">
+  <div id="gen">
+  <div id="regRow" style="display:none"><label>권역</label><select id="fReg"></select></div>
+  <label>일정/교육 내용</label><input id="fTitle" placeholder="예: 고객 응대 롤플레이">
+  <label id="fWhoL">담당자</label><input id="fWho">
+  <div id="extra"></div>
+  </div>
+  <div id="mgrf" style="display:none">
+    <label>구분</label>
+    <select id="mKind"><option value="escort">동행 (신입지점장 × 동행 지점장)</option><option value="edu">교육 (시간·내용·진행 센터장)</option><option value="etc">기타 (회의·연차 등)</option></select>
+    <div class="grp" id="g-escort"><label>신입지점장</label><select id="mWho"></select><label>동행 지점장 / 매니저</label><input id="mEscort" placeholder="예: 구자선 지점장"></div>
+    <div class="grp" id="g-edu"><label>시간</label><input id="mTime" placeholder="예: 14~16시"><label>교육 내용</label><input id="mTitle" placeholder="예: 간편 전산"><label>진행 센터장(강사)</label><input id="mLect" placeholder="예: 허은재"></div>
+    <div class="grp" id="g-etc"><label>내용</label><input id="mEtc" placeholder="예: 전략회의"></div>
+  </div>
+  <label>상태</label>
+  <select id="fStatus"><option>예정</option><option>진행중</option><option>완료</option></select>
+  <label>메모</label><textarea id="fMemo" rows="3"></textarea>
+  <div class="foot"><button class="btn ghost ghost" id="fCancel" type="button">취소</button><button class="btn" id="fSave" type="button">저장</button></div>
+</dialog>
+
+<script>
+const BOARDS=[
+ {id:"mgr",name:"신입지점장 OJT",icon:"🧑‍💼",who:"신입지점장",desc:"신입지점장 교육·동행 일정과 이수 현황",calendar:true,lanes:true},
+ {id:"stf",name:"신입매니저 OJT",icon:"🧑‍🎓",who:"신입매니저",desc:"신입매니저 교육·동행 일정과 이수 현황",calendar:true,extra:[{k:"branch",l:"지점"},{k:"trainer",l:"교육담당 센터장"},{k:"escort",l:"현장동반 매니저"}]},
+ {id:"mon",name:"월간활동일정",icon:"📅",who:"진행 센터장",desc:"센터장 월간 활동·회의·행사 일정 (권역별)",calendar:true,regions:["대전권","청주권","천안권"]}
+];
+const STAT=["예정","진행중","완료"];
+let items=[],settings={},cur="home",editing=null,dlgB=null,calMonth=new Date(),filter="";
+const ymKey=()=>`${calMonth.getFullYear()}-${String(calMonth.getMonth()+1).padStart(2,"0")}`;
+const L=i=>i.kind==="escort"?`${i.who} ← 동행 ${i.escort||"미정"}`:i.kind==="edu"?`${i.time?i.time+" ":""}${i.title}${i.lecturer?" ("+i.lecturer+")":""}`:i.title;
+function trainees(){
+  const s=settings["mgr-"+ymKey()]?.trainees;if(s&&s.length)return s;
+  return [...new Set(items.filter(i=>i.board==="mgr"&&i.kind==="escort"&&(i.date||"").startsWith(ymKey())).map(i=>i.who))].sort((a,b)=>a.localeCompare(b,"ko"));
+}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today=()=>new Date().toISOString().slice(0,10);
+
+function renderNav(){
+  $("#nav").innerHTML=[{id:"home",name:"🏠 홈"},...BOARDS.map(b=>({id:b.id,name:b.icon+" "+b.name}))]
+   .map(b=>`<button class="${cur===b.id?"on":""}" data-id="${b.id}">${b.name}</button>`).join("");
+  $("#nav").querySelectorAll("button").forEach(b=>b.onclick=()=>{cur=b.dataset.id;filter="";location.hash=cur;render()});
+}
+function render(){renderNav();cur==="home"?renderHome():renderBoard(BOARDS.find(b=>b.id===cur))}
+
+function renderHome(){
+  $("#main").innerHTML=`<div class="cards">${BOARDS.map(b=>{
+    const l=items.filter(i=>i.board===b.id),done=l.filter(i=>i.status==="완료").length,p=l.length?Math.round(done/l.length*100):0;
+    const next=l.filter(i=>i.status!=="완료"&&i.date>=today()).sort((a,c)=>a.date.localeCompare(c.date))[0];
+    return `<div class="card hubcard" data-id="${b.id}"><h3>${b.icon} ${b.name}</h3><div class="mute">${b.desc}</div>
+      <div class="bar"><i style="width:${p}%"></i></div><div class="mute">완료 ${done} / 전체 ${l.length} (${p}%)</div>
+      <div style="margin-top:10px;font-size:12px">다음 일정: ${next?`<b>${esc(next.date)}</b> ${esc(next.kind?L(next):next.title)}`:"없음"}</div></div>`}).join("")}</div>
+    <p class="mute" style="margin-top:18px">카드를 눌러 각 대시보드로 이동하세요. 일정은 누구나 추가·수정·삭제할 수 있고 실시간으로 공유됩니다.</p>`;
+  document.querySelectorAll(".hubcard").forEach(c=>c.onclick=()=>{cur=c.dataset.id;location.hash=cur;render()});
+}
+
+function renderBoard(b){
+  const all=items.filter(i=>i.board===b.id);
+  const whos=b.regions?b.regions:[...new Set(all.map(i=>i.who).filter(Boolean))];
+  let l=all.filter(i=>!filter||(b.regions?(i.region===filter||i.region==="전체"):i.who===filter)).sort((a,c)=>a.date.localeCompare(c.date)||(a.title||"").localeCompare(c.title||""));
+  const done=all.filter(i=>i.status==="완료").length,p=all.length?Math.round(done/all.length*100):0;
+  let h=`<div class="toolbar"><button class="btn" id="add">＋ 일정 추가</button>
+    <select id="flt" style="width:auto"><option value="">${b.regions?"전체 권역":"전체 "+b.who}</option>${whos.map(w=>`<option ${w===filter?"selected":""}>${esc(w)}</option>`).join("")}</select>
+    <span class="sp"></span><span class="mute">이수율 ${p}% (${done}/${all.length})</span></div>`;
+  if(b.lanes)h+=`<div class="card trn" style="margin-bottom:14px"><b>👥 ${calMonth.getMonth()+1}월 신입지점장</b><input id="trnIn" value="${esc(trainees().join(", "))}" placeholder="이름을 쉼표(,)로 구분"><button class="btn" id="trnSave">대상자 저장</button><span class="mute">달마다 따로 저장됩니다. 달력의 칸 구분(색)이 이 순서를 따릅니다.</span></div>`;
+  if(b.regions)h+=`<div class="legend" style="margin-bottom:8px"><span style="background:#fff4b8">대전권</span><span style="background:#d9f0d0">청주권</span><span style="background:#bfe6f7">천안권</span><span style="background:#fde3e3;color:#c00">전체(공통)</span></div>`;
+  if(b.calendar) h+=calendar(l,b);
+  h+=`<div class="card" style="padding:0;margin-top:14px">${l.filter(i=>!b.lanes||(i.date||"").startsWith(ymKey())).length?l.filter(i=>!b.lanes||(i.date||"").startsWith(ymKey())).map(i=>`<div class="row">
+    <div class="d">${esc(i.date)}</div>
+    <div><div class="t">${esc(i.kind?L(i):i.title)}</div><div class="mute">${i.kind?(i.kind==="escort"?"동행":i.kind==="edu"?"교육":"기타")+(i.memo?" · "+esc(i.memo):""):""}${i.region?"["+esc(i.region)+"] ":""}${!i.kind&&i.who?esc(i.who):""}${i.branch?" · 지점 "+esc(i.branch):""}${i.trainer?" · 담당 "+esc(i.trainer):""}${i.escort?" · 동반 "+esc(i.escort):""}${i.memo?" · "+esc(i.memo):""}</div></div>
+    <div><button class="badge s-${esc(i.status)}" data-st="${i.id}" title="클릭하여 상태 변경">${esc(i.status)}</button>
+    <button class="icon" data-ed="${i.id}">✏️</button><button class="icon" data-del="${i.id}">🗑️</button></div></div>`).join(""):`<div class="empty">아직 일정이 없습니다. 「＋ 일정 추가」로 시작하세요.</div>`}</div>`;
+  $("#main").innerHTML=h;
+  $("#add").onclick=()=>openDlg(b);
+  if($("#trnSave"))$("#trnSave").onclick=async()=>{
+    const t=$("#trnIn").value.split(/[,，]/).map(s=>s.trim()).filter(Boolean);
+    await saveTrainees(t);
+  };
+  $("#flt").onchange=e=>{filter=e.target.value;render()};
+  document.querySelectorAll("[data-st]").forEach(x=>x.onclick=()=>{const i=items.find(i=>i.id===x.dataset.st);save({...i,status:STAT[(STAT.indexOf(i.status)+1)%3]})});
+  document.querySelectorAll("[data-day]").forEach(x=>x.onclick=()=>openDlg(b,null,x.dataset.day,x.dataset.reg));
+  document.querySelectorAll("[data-ed]").forEach(x=>x.onclick=e=>{e.stopPropagation();openDlg(b,items.find(i=>i.id===x.dataset.ed))});
+  document.querySelectorAll("[data-del]").forEach(x=>x.onclick=()=>{if(x.dataset.arm===x.dataset.del){remove(x.dataset.del)}else{x.dataset.arm=x.dataset.del;x.textContent="❓확인";setTimeout(()=>{x.dataset.arm="";x.textContent="🗑️"},3000)}});
+  document.querySelectorAll("[data-cal]").forEach(x=>x.onclick=()=>{calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+ +x.dataset.cal,1);render()});
+}
+
+function dayHtml(l,ds,b){
+  const d=l.filter(i=>i.date===ds);
+  if(b.regions){
+    const e=i=>`<div class="ev w ${i.region==="전체"?"rall":"r"+Math.max(b.regions.indexOf(i.region),0)} s-${esc(i.status)}" data-ed="${i.id}" title="${esc(i.region)}">${esc(i.title)}${i.who?"<br>("+esc(i.who)+")":""}${i.memo?"<br><small>"+esc(i.memo)+"</small>":""}</div>`;
+    return d.filter(i=>i.region==="전체").map(e).join("")+b.regions.map(r=>d.filter(i=>i.region===r).map(e).join("")).join("")+d.filter(i=>i.region!=="전체"&&!b.regions.includes(i.region)).map(e).join("");
+  }
+  if(!b.lanes)return d.map(i=>`<div class="ev s-${esc(i.status)}" data-ed="${i.id}" title="${esc(i.who)} ${esc(i.title)}${i.branch?" / 지점 "+esc(i.branch):""}${i.trainer?" / 교육담당 "+esc(i.trainer):""}${i.escort?" / 동반 "+esc(i.escort):""}">${i.who?"["+esc(i.who)+"] ":""}${esc(i.title)}</div>`).join("");
+  const tr=trainees(),ev=(i,c,t)=>`<div class="ev w ${c} s-${esc(i.status)}" data-ed="${i.id}">${t}</div>`;
+  const esc_=d.filter(i=>i.kind==="escort").sort((a,c)=>tr.indexOf(a.who)-tr.indexOf(c.who));
+  return esc_.map(i=>{const k=tr.indexOf(i.who);return ev(i,"l"+Math.min(Math.max(k,0),2),`<b>${esc(i.who)}</b><br>${esc(i.escort||"미정")}`)}).join("")
+   +d.filter(i=>i.kind==="edu").sort((a,c)=>(a.time||"").localeCompare(c.time||"")).map(i=>ev(i,"edu",`${esc(i.time)}<br>${esc(i.title)}${i.lecturer?"<br>("+esc(i.lecturer)+")":""}`)).join("")
+   +d.filter(i=>i.kind!=="escort"&&i.kind!=="edu").map(i=>ev(i,"etc",esc(i.title||""))).join("");
+}
+function regCal(l,b){
+  const y=calMonth.getFullYear(),m=calMonth.getMonth(),days=new Date(y,m+1,0).getDate(),pad=n=>String(n).padStart(2,"0");
+  const ds=d=>`${y}-${pad(m+1)}-${pad(d)}`,off=(new Date(y,m,1).getDay()+6)%7;
+  const ev=(i,cls)=>`<div class="ev w ${cls} s-${esc(i.status)}" data-ed="${i.id}" title="${esc(i.region)}">${esc(i.title)}${i.who?"<br>("+esc(i.who)+")":""}${i.memo?"<br><small>"+esc(i.memo)+"</small>":""}</div>`;
+  let c=`<div class="card"><div class="toolbar"><button class="btn ghost" data-cal="-1">◀</button><b>${y}년 ${m+1}월</b><button class="btn ghost" data-cal="1">▶</button></div><div class="cal rg"><div class="h">권역</div>${"월화수목금토일".split("").map(d=>`<div class="h">${d}</div>`).join("")}`;
+  const row=(label,lc,reg,wd,cls)=>`<div class="lb ${lc}">${label}</div>`+wd.map(d=>d>=1&&d<=days
+    ?`<div data-day="${ds(d)}" data-reg="${reg}" style="cursor:pointer${ds(d)===today()?";background:#fffbe6":""}">${l.filter(i=>i.date===ds(d)&&i.region===reg).map(i=>ev(i,cls)).join("")}</div>`:`<div></div>`).join("");
+  for(let w0=1-off;w0<=days;w0+=7){
+    const wd=[0,1,2,3,4,5,6].map(k=>w0+k);
+    c+=`<div class="dh"></div>`+wd.map(d=>`<div class="dh">${d>=1&&d<=days?d:""}</div>`).join("");
+    if(l.some(i=>i.region==="전체"&&wd.some(d=>d>=1&&d<=days&&i.date===ds(d))))c+=row("전체","lrall","전체",wd,"rall");
+    b.regions.forEach((r,k)=>{if(!filter||filter===r)c+=row(r,"r"+k,r,wd,"r"+k)});
+  }
+  return c+`</div></div>`;
+}
+function calendar(l,b){
+  if(b.regions)return regCal(l,b);
+  const y=calMonth.getFullYear(),m=calMonth.getMonth(),first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();
+  let c=`<div class="card"><div class="toolbar"><button class="btn ghost" data-cal="-1">◀</button><b>${y}년 ${m+1}월</b><button class="btn ghost" data-cal="1">▶</button></div><div class="cal">`;
+  "일월화수목금토".split("").forEach(d=>c+=`<div class="h">${d}</div>`);
+  for(let i=0;i<first;i++)c+=`<div></div>`;
+  for(let d=1;d<=days;d++){
+    const ds=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    c+=`<div data-day="${ds}" style="cursor:pointer${ds===today()?";background:#fffbe6":""}"><span class="n">${d}</span>${dayHtml(l,ds,b)}</div>`;
+  }
+  return c+`</div></div>`;
+}
+
+function openDlg(b,it,date,reg){
+  editing=it||{id:null,board:b.id};dlgB=b;
+  $("#regRow").style.display=b.regions?"block":"none";
+  if(b.regions){$("#fReg").innerHTML=[...b.regions,"전체"].map(r=>`<option value="${r}">${r==="전체"?"전체 권역 (공통)":r}</option>`).join("");$("#fReg").value=it?.region||reg||(filter&&b.regions.includes(filter)?filter:b.regions[0])}
+  $("#gen").style.display=b.lanes?"none":"block";$("#mgrf").style.display=b.lanes?"block":"none";
+  if(b.lanes){
+    const tr=trainees();if(it?.who&&!tr.includes(it.who))tr.push(it.who);
+    $("#mWho").innerHTML=tr.map(t=>`<option>${esc(t)}</option>`).join("");
+    $("#mKind").value=it?.kind||"escort";$("#mWho").value=it?.who||tr[0]||"";$("#mEscort").value=it?.escort||"";
+    $("#mTime").value=it?.time||"";$("#mTitle").value=it?.kind==="edu"?it.title:"";$("#mLect").value=it?.lecturer||"";
+    $("#mEtc").value=it&&it.kind!=="escort"&&it.kind!=="edu"?it.title:"";showGrp();
+  }
+  $("#dlgTitle").textContent=(it?"일정 수정":"일정 추가")+" · "+b.name;
+  $("#fWhoL").textContent=b.who;
+  $("#fDate").value=it?.date||date||today();$("#fTitle").value=it?.title||"";
+  $("#fWho").value=it?.who||"";
+  $("#extra").innerHTML=(b.extra||[]).map(x=>`<label>${x.l}</label><input data-x="${x.k}" value="${esc(it?.[x.k]||"")}">`).join("");$("#fStatus").value=it?.status||"예정";$("#fMemo").value=it?.memo||"";
+  $("#dlg").showModal();
+}
+function showGrp(){["escort","edu","etc"].forEach(k=>$("#g-"+k).classList.toggle("on",$("#mKind").value===k))}
+$("#mKind").onchange=showGrp;
+$("#fCancel").onclick=()=>$("#dlg").close();
+$("#fSave").onclick=async()=>{
+  if(dlgB?.lanes){
+    const k=$("#mKind").value,d=$("#fDate").value;if(!d)return;
+    const base={...editing,date:d,kind:k,status:$("#fStatus").value,memo:$("#fMemo").value.trim(),who:"",escort:"",time:"",lecturer:"",title:""};
+    if(k==="escort"){if(!$("#mWho").value)return;Object.assign(base,{who:$("#mWho").value,escort:$("#mEscort").value.trim(),title:"동행"})}
+    else if(k==="edu"){if(!$("#mTitle").value.trim())return;Object.assign(base,{time:$("#mTime").value.trim(),title:$("#mTitle").value.trim(),lecturer:$("#mLect").value.trim()})}
+    else{if(!$("#mEtc").value.trim())return;base.title=$("#mEtc").value.trim()}
+    await save(base);$("#dlg").close();return;
+  }
+  if(!$("#fTitle").value.trim()||!$("#fDate").value)return;
+  const ex={};document.querySelectorAll("#extra [data-x]").forEach(x=>ex[x.dataset.x]=x.value.trim());
+  if(dlgB?.regions)ex.region=$("#fReg").value;
+  await save({...editing,...ex,date:$("#fDate").value,title:$("#fTitle").value.trim(),who:$("#fWho").value.trim(),status:$("#fStatus").value,memo:$("#fMemo").value.trim()});
+  $("#dlg").close();
+};
+
+
+const SUPA_URL="https://usxzzgkewedyxrkkzudc.supabase.co";
+const SUPA_KEY="sb_publishable_t_h3yZy5I8_k6UK3qaLIeA_V9CU1-E2";
+const EMAIL={"허은재":"gjdmswo@center-hub.app","홍영미":"ghddudal@center-hub.app","조소현":"whthgus@center-hub.app","김미송":"rlaalthd@center-hub.app","이소윤":"dlthdbs@center-hub.app","이은정":"dldmswjd@center-hub.app","마스터":"master@center-hub.app"};
+const NAME_BY_EMAIL=Object.fromEntries(Object.entries(EMAIL).map(([n,e])=>[e,n]));
+let sb=null,me=null,subscribed=false,loadT=null;
+
+async function save(i){
+  const id=i.id||("i"+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
+  const row={id,board:i.board,date:i.date,title:i.title,who:i.who||"",status:i.status,memo:i.memo||"",branch:i.branch||"",trainer:i.trainer||"",escort:i.escort||"",region:i.region||"",kind:i.kind||"",time:i.time||"",lecturer:i.lecturer||"",updated_by:me||"",updated_at:new Date().toISOString()};
+  const k=items.findIndex(x=>x.id===id);k<0?items.push(row):items[k]=row;render();
+  const {error}=await sb.from("items").upsert(row);
+  if(error){$("#status").textContent="(저장 실패: "+error.message+")";load()}
+}
+async function remove(id){
+  items=items.filter(i=>i.id!==id);render();
+  const {error}=await sb.from("items").delete().eq("id",id);
+  if(error){$("#status").textContent="(삭제 실패: "+error.message+")";load()}
+}
+async function saveTrainees(t){
+  const id="mgr-"+ymKey();
+  settings[id]={id,trainees:t};render();
+  const {error}=await sb.from("settings").upsert({id,trainees:t});
+  if(error){$("#status").textContent="(저장 실패: "+error.message+")";load()}
+}
+async function load(){
+  const [a,b]=await Promise.all([sb.from("items").select("*").limit(5000),sb.from("settings").select("*")]);
+  if(a.error){$("#status").textContent="(불러오기 실패: "+a.error.message+")";return}
+  items=(a.data||[]).filter(i=>i.date&&i.board);
+  settings={};(b.data||[]).forEach(d=>settings[d.id]=d);
+  $("#status").textContent="(실시간 공유 중)";
+  if(!$("#dlg").open)render();
+}
+function scheduleLoad(){clearTimeout(loadT);loadT=setTimeout(load,300)}
+function subscribe(){
+  if(subscribed)return;subscribed=true;
+  sb.channel("hub").on("postgres_changes",{event:"*",schema:"public",table:"items"},scheduleLoad)
+    .on("postgres_changes",{event:"*",schema:"public",table:"settings"},scheduleLoad).subscribe();
+}
+function gate(){
+  $("#login").style.display=me?"none":"flex";
+  $("#nav").style.display=$("#main").style.display=me?"":"none";
+  $("#out").textContent=me?me+"님 · 로그아웃":"";
+}
+function setSession(s){
+  me=s?(NAME_BY_EMAIL[s.user.email]||s.user.email):null;
+  gate();
+  if(s){load();subscribe()}else{items=[];settings={};render()}
+}
+$("#lf").onsubmit=async e=>{
+  e.preventDefault();
+  const id=$("#lid").value.trim(),pw=$("#lpw").value,email=EMAIL[id]||id;
+  $("#lerr").textContent="";
+  const {error}=await sb.auth.signInWithPassword({email,password:pw});
+  if(error)$("#lerr").textContent="아이디 또는 비밀번호가 올바르지 않습니다.";
+  else $("#lpw").value="";
+};
+$("#out").onclick=async e=>{e.preventDefault();await sb.auth.signOut();$("#lid").value=""};
+(async()=>{
+  const h=location.hash.slice(1);if(BOARDS.some(b=>b.id===h))cur=h;
+  render();gate();
+  if(!window.supabase){$("#lerr").textContent="서버 연결 라이브러리를 불러오지 못했습니다.";return}
+  sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+  const {data}=await sb.auth.getSession();
+  setSession(data.session);
+  sb.auth.onAuthStateChange((ev,s)=>{if(ev==="SIGNED_IN"||ev==="SIGNED_OUT")setSession(s)});
+})();
+</script>
+</body>
+</html>
