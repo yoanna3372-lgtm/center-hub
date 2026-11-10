@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>매니저코칭노트</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#f4f4f2;--sf:#fff;--ink:#1b1b1b;--mu:#6a6a68;--ln:#dedcd8;--ac:#c8281e;--acs:#fbecea;--bad:#c8281e}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Malgun Gothic","Apple SD Gothic Neo",sans-serif}
+header.hd{background:#000;color:#fff;padding:14px 24px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.hd .sm{font-size:11px;color:#ffb3a8;font-style:italic}.hd h1{color:#fff;font-size:24px;font-weight:800}.hd h1 b{color:#ff5a4a}.hd .mu{color:#cfcfcf}
+.hbtn{border:1px solid #bbb;background:transparent;color:#fff;border-radius:6px;padding:7px 14px;font-size:14px;text-decoration:none}
+.bar3{height:3px;background:var(--ac)}
+.pill{padding:7px 16px;font-size:14px}.chip.on{background:var(--ac);border-color:var(--ac)}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px 60px;display:grid;gap:14px}
+a.back{color:var(--ac);text-decoration:none;font-weight:600;font-size:14px}
+h1{margin:0;font-size:26px}
+.top{display:flex;justify-content:space-between;align-items:end;flex-wrap:wrap;gap:8px}
+.mu{color:var(--mu);font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{border:1px solid var(--ln);background:var(--sf);border-radius:999px;padding:5px 13px;font-size:13px;cursor:pointer}
+.chip.on{color:#fff}
+input,select,textarea,button{font:inherit;color:inherit}
+input,select,textarea{background:var(--sf);border:1px solid var(--ln);border-radius:8px;padding:8px 10px;width:100%}
+.btn{border:1px solid var(--ln);background:var(--sf);border-radius:8px;padding:7px 14px;cursor:pointer;font-weight:500}
+.btn.p{background:var(--ac);border-color:var(--ac);color:#fff}
+.btn.sm{padding:4px 10px;font-size:13px}
+.btn.d{color:var(--bad)}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:14px 16px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:12px;color:var(--mu);padding:8px;border-bottom:1px solid var(--ln);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--ln);vertical-align:middle}
+.tw{overflow-x:auto}
+.last{max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mu);font-size:13px}
+.tag{display:inline-block;border-radius:6px;padding:1px 8px;font-size:12px;font-weight:600;background:var(--acs);color:var(--ac)}
+.tag.no{background:#fbf0d8;color:#a8720a}
+.ov{position:fixed;inset:0;background:rgba(6,14,16,.5);display:flex;justify-content:center;align-items:center;padding:16px;z-index:20}
+.dlg{background:var(--sf);border-radius:14px;width:min(600px,100%);max-height:100%;overflow:auto;padding:20px;display:grid;gap:12px}
+.dlg h3{margin:0;font-size:20px}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:480px){.row{grid-template-columns:1fr 1fr}}
+label{display:grid;gap:4px;font-size:13px;color:var(--mu)}
+textarea{min-height:150px;resize:vertical;line-height:1.6}
+.hist .it{border-top:1px solid var(--ln);padding:10px 0;display:grid;gap:4px}
+.hist .meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:13px;color:var(--mu);align-items:center}
+.hist .meta b{color:var(--ink)}
+.hist p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.err{color:var(--bad);font-size:13px;margin:0}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;z-index:30}
+.empty{padding:18px;text-align:center;color:var(--mu)}
+.hubnav{display:flex;gap:6px;padding:10px 24px 0;background:#fff;border-bottom:3px solid #c8281e;overflow-x:auto}
+.hubnav a{border:1px solid #dedcd8;border-bottom:0;background:#f0efec;border-radius:8px 8px 0 0;padding:8px 18px;font-size:14px;color:#6a6a68;white-space:nowrap;font-weight:700;text-decoration:none;margin-bottom:-3px}
+.hubnav a.on{background:#fff;color:#c8281e;border-color:#c8281e;border-bottom:3px solid #fff}
+/*MOBILE*/
+@media(max-width:700px){
+ header.hd{padding:12px 14px}.hd h1{font-size:19px}.hd .sm{font-size:10px}
+ .hbtn{padding:6px 10px;font-size:13px}
+ .hubnav{padding:8px 10px 0;gap:4px}.hubnav a{padding:7px 12px;font-size:13px}
+ .wrap{padding:12px 10px 50px}
+ input,select,textarea{font-size:16px}
+ #q{width:100%!important}
+ .card{padding:10px 10px}
+ table{min-width:560px}th,td{padding:7px 6px}
+ .dlg{padding:14px}.row{grid-template-columns:1fr 1fr 1fr}
+}
+@media(max-width:700px){
+ #list table{min-width:0;display:block}
+ #list thead{display:none}
+ #list tbody{display:block}
+ #list tbody tr{display:grid;grid-template-columns:auto auto 1fr auto;column-gap:10px;row-gap:3px;padding:12px 2px;border-bottom:1px solid var(--ln);align-items:center}
+ #list td{border:0;padding:0;white-space:nowrap}
+ #list td:nth-child(2){grid-column:1/4;grid-row:1;font-size:16px}
+ #list td:nth-child(6){grid-column:4;grid-row:1/3;align-self:center}
+ #list td:nth-child(1){grid-column:1;grid-row:2;color:var(--mu);font-size:13px}
+ #list td:nth-child(3){grid-column:2;grid-row:2;color:var(--mu);font-size:13px}
+ #list td:nth-child(5){grid-column:3;grid-row:2;color:var(--mu);font-size:13px}
+ #list td:nth-child(5)::before{content:"코칭 "}#list td:nth-child(5)::after{content:"회"}
+ #list td:nth-child(4){grid-column:1/5;grid-row:3;white-space:normal;margin-top:2px}
+ #list .last{max-width:none;white-space:nowrap}
+ .hist .meta{font-size:12px}
+ .hist p{font-size:14px}
+ .btn.sm{padding:8px 12px}
+}
+</style>
+</head>
+<body>
+<header class="hd"><div><div class="sm">30% 성장을 위하여!</div><h1><b>충청GA본부</b> 매니저코칭노트</h1><div class="mu"><b id="me" style="color:#fff"></b></div></div><a class="hbtn" href="index.html">← 센터장 업무허브</a></header>
+<nav class="hubnav"><a href="index.html">🏠 홈</a><a href="index.html#mgr">🧑‍💼 신입지점장 OJT</a><a href="index.html#stf">🧑‍🎓 신입매니저 OJT</a><a href="index.html#mon">📅 월간활동일정</a><a href="coaching.html" class="on">📝 매니저코칭노트</a><a href="goal.html">🎯 매니저목표진척</a></nav>
+<div class="wrap">
+  <div class="top">
+    <div class="mu">매니저별로 일자·방식·코칭내용을 기록하면 서버에 저장되어 언제든 다시 볼 수 있습니다.</div>
+    <div class="chips"><input id="q" placeholder="매니저·지점·이름 검색" style="width:220px"></div>
+  </div>
+  <div class="chips" id="centers"></div>
+  <div class="chips" id="branches"></div>
+  <div id="notice" class="card" hidden style="background:#fbf0d8"></div>
+  <div class="card tw"><div id="list"></div></div>
+  <div class="card">
+    <div class="top"><b>최근 코칭 기록</b><span class="mu" id="feedHint"></span></div>
+    <div class="hist" id="feed"></div>
+  </div>
+</div>
+
+<div class="ov" id="ov" hidden>
+  <form class="dlg" id="f" novalidate>
+    <div class="top"><div><div class="mu" id="dSub"></div><h3 id="dName"></h3></div><button type="button" class="btn sm" id="dClose">닫기</button></div>
+    <div class="row">
+      <label>일자<input type="date" id="dDate"></label>
+      <label>방식<select id="dMethod"><option>대면</option><option>유선</option></select></label>
+      <label>작성자<input id="dBy" readonly style="background:var(--bg)"></label>
+    </div>
+    <label>코칭내용<textarea id="dNote" placeholder="코칭한 내용을 적어 주세요."></textarea></label>
+    <p class="err" id="dErr" hidden></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button type="button" class="btn" id="dCancelEdit" hidden>수정 취소</button>
+      <button type="submit" class="btn p" id="dSave">저장</button>
+    </div>
+    <b>이전 코칭 기록</b>
+    <div class="hist" id="dHist"></div>
+  </form>
+</div>
+
+<script>
+const SUPA_URL="https://usxzzgkewedyxrkkzudc.supabase.co";
+const SUPA_KEY="sb_publishable_t_h3yZy5I8_k6UK3qaLIeA_V9CU1-E2";
+const NAME_BY_EMAIL={"gjdmswo@center-hub.app":"허은재","ghddudal@center-hub.app":"홍영미","whthgus@center-hub.app":"조소현","rlaalthd@center-hub.app":"김미송","dlthdbs@center-hub.app":"이소윤","dldmswjd@center-hub.app":"이은정","rhqjatjr@center-hub.app":"고범석","master@center-hub.app":"마스터"};
+const CENTERS=["조소현","허은재","홍영미","이소윤","이은정","김미송"];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad=n=>String(n).padStart(2,"0");
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
+const md=s=>s?`${+s.slice(5,7)}/${+s.slice(8,10)}`:"";
+const bnum=b=>parseInt((b||"").replace(/\D/g,""))||0;
+let sb,me="",managers=[],notes=[],center="전체",branch="전체",cur=null,editId=null,loaded=false;
+
+function toast(t){const e=document.createElement("div");e.className="toast";e.textContent=t;document.body.append(e);setTimeout(()=>e.remove(),2200)}
+
+const byMgr=()=>{const m=new Map();notes.forEach(n=>{if(!m.has(n.manager_code))m.set(n.manager_code,[]);m.get(n.manager_code).push(n)});m.forEach(l=>l.sort((a,b)=>b.note_date.localeCompare(a.note_date)||b.created_at.localeCompare(a.created_at)));return m};
+
+function render(){
+  $("#centers").innerHTML=`<span class="mu">센터장</span>`+["전체",...CENTERS].map(c=>`<button type="button" class="chip ${center===c?"on":""}" data-c="${c}">${c}${c==="전체"?" "+managers.length:" "+managers.filter(m=>m.center===c).length}</button>`).join("");
+  const inC=managers.filter(m=>center==="전체"||m.center===center);
+  const brs=[...new Set(inC.map(m=>m.branch))].sort((a,b)=>bnum(a)-bnum(b));
+  if(branch!=="전체"&&!brs.includes(branch))branch="전체";
+  $("#branches").innerHTML=`<span class="mu">지점</span>`+["전체",...brs].map(b=>`<button type="button" class="chip ${branch===b?"on":""}" data-b="${esc(b)}">${esc(b.replace("충청GA-",""))}</button>`).join("");
+  const kw=$("#q").value.trim();
+  const idx=byMgr();
+  const rows=inC.filter(m=>(branch==="전체"||m.branch===branch)&&(!kw||m.name.includes(kw)||m.branch.includes(kw)))
+    .sort((a,b)=>bnum(a.branch)-bnum(b.branch)||a.name.localeCompare(b.name,"ko"));
+  if(!loaded){$("#list").innerHTML=`<div class="empty">불러오는 중…</div>`}
+  else if(!rows.length){$("#list").innerHTML=`<div class="empty">표시할 매니저가 없습니다.</div>`}
+  else $("#list").innerHTML=`<table><thead><tr><th>지점</th><th>매니저</th><th>센터장</th><th>최근 코칭</th><th>횟수</th><th></th></tr></thead><tbody>${rows.map(m=>{
+    const l=idx.get(m.code)||[],n=l[0];
+    return `<tr><td>${esc(m.branch.replace("충청GA-",""))}</td><td><b>${esc(m.name)}</b> <span class="mu">${esc(m.grade)}${m.region?" · "+esc(m.region):""}</span></td><td>${esc(m.center)}</td>
+    <td>${n?`<div><span class="tag">${md(n.note_date)} ${esc(n.method)} · ${esc(n.written_by||"")}</span></div><div class="last">${esc(n.note)}</div>`:`<span class="tag no">기록 없음</span>`}</td>
+    <td>${l.length}</td><td><button type="button" class="btn sm p" data-w="${esc(m.code)}">✏️ 코칭 입력</button></td></tr>`}).join("")}</tbody></table>`;
+  const scope=new Set(inC.map(m=>m.code));
+  const feed=notes.filter(n=>scope.has(n.manager_code)).sort((a,b)=>b.note_date.localeCompare(a.note_date)||b.created_at.localeCompare(a.created_at));
+  $("#feedHint").textContent=feed.length?`총 ${feed.length}건 · 최근 30건`:"";
+  $("#feed").innerHTML=feed.length?feed.slice(0,30).map(n=>item(n,true)).join(""):`<div class="empty">아직 코칭 기록이 없습니다.</div>`;
+  if(!$("#ov").hidden&&cur)renderHist();
+}
+function item(n,showName){
+  const mine=n.written_by===me;
+  return `<div class="it"><div class="meta">${showName?`<b>${esc(n.manager_name)}</b><span>${esc(n.branch.replace("충청GA-",""))}</span>`:""}<span>${n.note_date} · ${esc(n.method)} · 작성자 <b>${esc(n.written_by||"미상")}</b></span>${mine?`<button type="button" class="btn sm" data-e="${n.id}">수정</button><button type="button" class="btn sm d" data-x="${n.id}">삭제</button>`:""}</div><p>${esc(n.note)}</p></div>`;
+}
+function renderHist(){
+  const l=(byMgr().get(cur.code)||[]);
+  $("#dHist").innerHTML=l.length?l.map(n=>item(n,false)).join(""):`<div class="empty">아직 기록이 없습니다.</div>`;
+}
+function openDlg(code){
+  cur=managers.find(m=>m.code===code);if(!cur)return;
+  editId=null;$("#dSub").textContent=[cur.center,cur.branch].filter(Boolean).join(" · ");
+  $("#dName").textContent=`${cur.name} ${cur.grade||""}`;
+  $("#dDate").value=today();$("#dMethod").value="대면";$("#dNote").value="";$("#dErr").hidden=true;$("#dBy").value=me;
+  $("#dSave").textContent="저장";$("#dCancelEdit").hidden=true;
+  renderHist();$("#ov").hidden=false;setTimeout(()=>$("#dNote").focus(),50);
+}
+function startEdit(id){
+  const n=notes.find(x=>x.id===id);if(!n)return;
+  if(!cur||cur.code!==n.manager_code){cur=managers.find(m=>m.code===n.manager_code);if(!cur)return;openDlg(cur.code)}
+  editId=id;$("#dBy").value=n.written_by||me;$("#dDate").value=n.note_date;$("#dMethod").value=n.method;$("#dNote").value=n.note;
+  $("#dSave").textContent="수정 저장";$("#dCancelEdit").hidden=false;$("#ov").hidden=false;$("#dNote").focus();
+}
+async function load(){
+  const [a,b]=await Promise.all([
+    sb.from("coach_managers").select("*").range(0,999),
+    sb.from("coach_notes").select("*").order("note_date",{ascending:false}).range(0,4999)]);
+  if(a.error||b.error){$("#notice").hidden=false;$("#notice").textContent="서버에서 자료를 불러오지 못했습니다. 수퍼베이스에서 coach-notes.sql 을 실행했는지 확인해 주세요.";loaded=true;render();return}
+  $("#notice").hidden=true;managers=a.data;notes=b.data;loaded=true;render();
+}
+let lt;const later=()=>{clearTimeout(lt);lt=setTimeout(load,300)};
+
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("button");if(!t)return;
+  if(t.dataset.c){center=t.dataset.c;branch="전체";render()}
+  else if(t.dataset.b){branch=t.dataset.b;render()}
+  else if(t.dataset.w)openDlg(t.dataset.w);
+  else if(t.dataset.e)startEdit(t.dataset.e);
+  else if(t.dataset.x){
+    if(!t.dataset.arm){t.dataset.arm=1;t.textContent="한 번 더 누르면 삭제";return}
+    const id=t.dataset.x;notes=notes.filter(n=>n.id!==id);render();
+    const {error}=await sb.from("coach_notes").delete().eq("id",id);
+    if(error){toast("삭제하지 못했습니다");load()}else toast("삭제했습니다");
+  }
+});
+$("#q").oninput=render;
+$("#dClose").onclick=()=>{$("#ov").hidden=true;cur=null;editId=null};
+$("#dCancelEdit").onclick=()=>openDlg(cur.code);
+$("#ov").addEventListener("mousedown",e=>{if(e.target===$("#ov")){$("#ov").hidden=true;cur=null;editId=null}});
+$("#f").onsubmit=async e=>{
+  e.preventDefault();
+  const note=$("#dNote").value.trim(),date=$("#dDate").value,err=m=>{$("#dErr").textContent=m;$("#dErr").hidden=false};
+  if(!date)return err("일자를 입력해 주세요.");
+  if(!note)return err("코칭내용을 적어 주세요.");
+  const row={note_date:date,method:$("#dMethod").value,note,updated_at:new Date().toISOString()};
+  let error;
+  if(editId){({error}=await sb.from("coach_notes").update(row).eq("id",editId))}
+  else{({error}=await sb.from("coach_notes").insert({...row,manager_code:cur.code,manager_name:cur.name,branch:cur.branch,center:cur.center,written_by:me}))}
+  if(error)return err("저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+  toast(editId?"수정했습니다":`${cur.name} 코칭 내용을 저장했습니다`);
+  editId=null;$("#dNote").value="";$("#dSave").textContent="저장";$("#dCancelEdit").hidden=true;$("#dErr").hidden=true;
+  await load();
+};
+
+(async()=>{
+  render();
+  if(!window.supabase){$("#notice").hidden=false;$("#notice").textContent="서버 연결 라이브러리를 불러오지 못했습니다.";return}
+  sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+  const {data}=await sb.auth.getSession();
+  if(!data.session){location.replace("index.html");return}
+  me=NAME_BY_EMAIL[data.session.user.email]||data.session.user.email;
+  $("#me").textContent=me+"님";
+  if(CENTERS.includes(me))center=me;
+  await load();
+  sb.channel("coach-notes-live").on("postgres_changes",{event:"*",schema:"public",table:"coach_notes"},later)
+    .on("postgres_changes",{event:"*",schema:"public",table:"coach_managers"},later).subscribe();
+})();
+</script>
+</body>
+</html>

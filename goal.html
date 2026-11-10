@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>매니저목표진척</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f4f4f2;--sf:#fff;--ink:#1b1b1b;--mu:#6a6a68;--ln:#dedcd8;--red:#c8281e;--reds:#fbecea;--grn:#1f7a4d;--grns:#e3f3ea;--warn:#a8720a;--warns:#fbf0d8;--bl:#2f6fb0;--bls:#e3eefa}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Malgun Gothic","Apple SD Gothic Neo",sans-serif}
+header.hd{background:#000;color:#fff;padding:14px 24px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.hd .sm{font-size:11px;color:#ffb3a8;font-style:italic}
+.hd h1{margin:0;font-size:24px;font-weight:800}.hd h1 b{color:#ff5a4a}
+.hd .sub{font-size:13px;color:#cfcfcf;margin-top:2px}
+.hd .acts{display:flex;gap:8px;flex-wrap:wrap}
+.hbtn{border:1px solid #bbb;background:transparent;color:#fff;border-radius:6px;padding:7px 14px;cursor:pointer;font:inherit;font-size:14px;text-decoration:none}
+.hbtn.p{background:var(--red);border-color:var(--red)}
+.tabs{display:flex;gap:6px;padding:14px 24px 0;border-bottom:3px solid var(--red);background:var(--sf)}
+.tab{border:1px solid var(--ln);border-bottom:0;background:#f0efec;border-radius:8px 8px 0 0;padding:9px 22px;font-weight:700;cursor:pointer;color:var(--mu);font-size:15px;margin-bottom:-3px}
+.tab.on{background:var(--sf);color:var(--red);border-color:var(--red);border-bottom:3px solid var(--sf)}
+.wrap{max-width:1300px;margin:0 auto;padding:18px 20px 60px;display:grid;gap:16px}
+.mu{color:var(--mu);font-size:13px}
+.lbl{font-weight:800;font-size:14px;padding-left:8px;border-left:3px solid var(--ln);margin-right:6px}
+.pills{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pill{border:1px solid var(--ln);background:var(--sf);border-radius:999px;padding:7px 16px;font-size:14px;cursor:pointer}
+.pill small{color:var(--mu);margin-left:4px;font-size:12px}
+.pill.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+.pill.on small{color:#ffd9d4}
+input,select{font:inherit;color:inherit;background:var(--sf);border:1px solid var(--ln);border-radius:8px;padding:8px 10px}
+input[type=checkbox]{padding:0}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:16px 18px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:800px){.kpis{grid-template-columns:1fr 1fr}}
+.kpi .l{font-size:13px;color:var(--mu);font-weight:700}
+.kpi .b{font-size:28px;font-weight:800;line-height:1.2}.kpi .b small{font-size:14px;color:var(--mu);font-weight:500}
+.bar{height:8px;background:#e8e6e1;border-radius:4px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--red)}
+.bar.g i{background:var(--grn)}
+.opts{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:13px;color:var(--mu)}
+.opts input[type=number]{width:96px}
+/* 지점 카드 */
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:14px}
+@media(max-width:480px){.bgrid{grid-template-columns:1fr}}
+.bc h3{margin:0;font-size:18px}
+.bc .hd2{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.mrow{display:grid;grid-template-columns:96px repeat(3,1fr);gap:6px;align-items:center;padding:8px 0;border-top:1px solid var(--ln);cursor:pointer}
+.mrow:hover{background:#faf9f7}
+.mrow.th{border-top:0;cursor:default;font-size:12px;color:var(--mu);font-weight:700;padding:2px 0}
+.mrow.th:hover{background:none}
+.mrow.tot{background:#f6f4f0;font-weight:700;border-radius:6px;padding:8px 6px;margin-top:4px;cursor:default}
+.mrow .nm b{font-size:15px}.mrow .nm div{font-size:11px;color:var(--mu)}
+.m3 b{font-size:15px}.m3 .z{color:var(--mu)}
+.mini{height:5px;background:#e8e6e1;border-radius:3px;margin-top:3px;overflow:hidden}.mini i{display:block;height:100%;background:var(--red)}
+.mini.full i{background:var(--grn)}
+.ok{display:inline-block;margin-left:3px;border-radius:5px;padding:0 5px;font-size:11px;font-weight:800;background:var(--grns);color:var(--grn)}
+/* 챙길 사람 */
+.focus{background:var(--reds);border:2px solid var(--red);border-radius:10px;padding:14px 18px}
+.focus h2{margin:0 0 10px;font-size:20px;color:var(--red)}.focus h2 small{font-size:13px;color:var(--mu);font-weight:400;margin-left:8px}
+.fgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+@media(max-width:900px){.fgrid{grid-template-columns:repeat(2,1fr)}}
+.fc{background:var(--sf);border:1px solid var(--ln);border-radius:8px;padding:10px 12px;cursor:pointer;min-width:0}
+.fc b{font-size:17px}.fc .rk{float:right;color:#bbb;font-weight:800}
+.fc .ag{font-size:12px;color:var(--mu);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fc .nx{font-weight:700;margin-top:4px;font-size:14px}.fc .nx em{color:var(--red);font-style:normal}
+/* 목록 */
+.two{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+@media(max-width:1000px){.two{grid-template-columns:1fr}}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{background:#f3f2ef;text-align:left;font-size:13px;padding:10px 8px;border-top:2px solid #555;border-bottom:1px solid var(--ln);white-space:nowrap}
+td{padding:10px 8px;border-bottom:1px solid var(--ln);vertical-align:middle}
+tr.pr{cursor:pointer}tr.pr:hover td,tr.pr.sel td{background:#fbf3f2}
+.n{text-align:right;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;border-radius:6px;padding:1px 8px;font-size:12px;font-weight:700;background:#ece9e4;color:var(--mu);margin-right:3px}
+.tag.ok2{background:var(--grns);color:var(--grn)}.tag.no{background:var(--warns);color:var(--warn)}.tag.t20{background:var(--bls);color:var(--bl)}
+.side{position:sticky;top:12px;display:grid;gap:12px}
+.side #side{min-height:120px}
+.nf{display:grid;gap:8px}.nf .r2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.nf label{display:grid;gap:3px;font-size:12px;color:var(--mu)}
+.nf textarea{width:100%;min-height:110px;resize:vertical;font:inherit;border:1px solid var(--ln);border-radius:8px;padding:8px 10px;line-height:1.5}
+.nf input,.nf select{width:100%}
+.nh .it{border-top:1px solid var(--ln);padding:8px 0;display:grid;gap:3px;font-size:14px}
+.nh .mt{font-size:12px;color:var(--mu);display:flex;flex-wrap:wrap;gap:3px 8px;align-items:center}
+.nh p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.sbtn{border:1px solid var(--ln);background:var(--sf);border-radius:6px;padding:1px 8px;font-size:12px;cursor:pointer}.sbtn.d{color:var(--red)}
+.btnp{background:var(--red);border:1px solid var(--red);color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;font:inherit;font-weight:700}
+.side .empty{padding:50px 10px}
+.side h3{margin:0;font-size:22px}
+.kv{display:grid;grid-template-columns:90px 1fr;gap:4px 8px;font-size:14px;margin:10px 0}.kv span:nth-child(odd){color:var(--mu)}
+.empty{padding:26px;text-align:center;color:var(--mu)}
+#notice{background:var(--warns);color:var(--warn)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#000;color:#fff;padding:10px 16px;border-radius:8px;z-index:30}
+.hubnav{display:flex;gap:6px;padding:10px 24px 0;background:#fff;border-bottom:3px solid #c8281e;overflow-x:auto}
+.hubnav a{border:1px solid #dedcd8;border-bottom:0;background:#f0efec;border-radius:8px 8px 0 0;padding:8px 18px;font-size:14px;color:#6a6a68;white-space:nowrap;font-weight:700;text-decoration:none;margin-bottom:-3px}
+.hubnav a.on{background:#fff;color:#c8281e;border-color:#c8281e;border-bottom:3px solid #fff}
+/*MOBILE*/
+@media(max-width:700px){
+ header.hd{padding:12px 14px}.hd h1{font-size:19px}.hd .sm{font-size:10px}.hd .sub{font-size:12px}
+ .hbtn{padding:6px 10px;font-size:13px}
+ .hubnav{padding:8px 10px 0;gap:4px}.hubnav a{padding:7px 12px;font-size:13px}
+ .tabs{padding:10px 10px 0;gap:4px}.tab{padding:8px 14px;font-size:14px}
+ .wrap{padding:12px 10px 50px;gap:12px}
+ input,select,textarea{font-size:16px}
+ #q{width:100%!important}
+ .pill{padding:6px 12px;font-size:13px}
+ .kpi .b{font-size:22px}
+ .bgrid{grid-template-columns:1fr}
+ .mrow{grid-template-columns:78px repeat(3,1fr);gap:4px}.mrow .nm b{font-size:14px}.m3 b{font-size:14px}
+ .focus{padding:10px 12px}.focus h2{font-size:17px}.fgrid{grid-template-columns:1fr 1fr}
+ table{min-width:620px}th,td{padding:7px 6px}
+ .side{position:static}
+ .opts{font-size:12px}
+}
+</style>
+</head>
+<body>
+<header class="hd">
+  <div>
+    <div class="sm">30% 성장을 위하여!</div>
+    <h1><b>충청GA본부</b> 매니저목표진척</h1>
+    <div class="sub" id="metaLine">불러오는 중…</div>
+  </div>
+  <div class="acts">
+    <a class="hbtn" href="index.html">← 센터장 업무허브</a>
+    <input type="file" id="xf" accept=".xlsx,.xls,.xlsm" hidden>
+    <button class="hbtn p" id="upBtn" type="button">📥 엑셀 올리기</button>
+  </div>
+</header>
+<nav class="hubnav"><a href="index.html">🏠 홈</a><a href="index.html#mgr">🧑‍💼 신입지점장 OJT</a><a href="index.html#stf">🧑‍🎓 신입매니저 OJT</a><a href="index.html#mon">📅 월간활동일정</a><a href="coaching.html">📝 매니저코칭노트</a><a href="goal.html" class="on">🎯 매니저목표진척</a></nav>
+<div class="tabs">
+  <button class="tab on" data-tab="b" type="button">지점별 매니저 현황</button>
+  <button class="tab" data-tab="p" type="button">사용인 목록</button>
+</div>
+<div class="wrap">
+  <div id="notice" class="card" hidden></div>
+  <div class="pills" id="centers"></div>
+
+  <section id="vb">
+    <div class="kpis" id="kpis"></div>
+    <div class="pills" id="branches" style="margin:14px 0"></div>
+    <div class="bgrid" id="bgrid"></div>
+  </section>
+
+  <section id="vp" hidden style="display:grid;gap:16px">
+    <div class="focus" id="focus"></div>
+    <div class="pills" id="filters"></div>
+    <div class="pills">
+      <span class="lbl">조회 조건</span>
+      <select id="selB"></select><select id="selM"></select>
+      <input id="q" placeholder="이름·대리점·코드 입력" style="width:240px">
+      <span class="mu" id="cnt" style="margin-left:auto"></span><button type="button" class="sbtn" data-img="copy" data-t="plcard" data-n="list">📋 목록 이미지 복사</button><button type="button" class="sbtn" data-img="save" data-t="plcard" data-n="list">🖼 목록 이미지 저장</button>
+    </div>
+    <div class="two">
+      <div class="card tw" style="padding:0" id="plcard"><div id="plist"></div></div>
+      <div class="side"><div class="card" id="side"><div class="empty">목록에서 사용인을 선택하면 상세가 표시됩니다</div></div><div class="card" id="cnote" hidden></div></div>
+    </div>
+  </section>
+
+  <div class="card opts">
+    <b style="color:var(--ink)">달성 기준</b>
+    <span>케어메이트 실적 ≥ <input type="number" id="thC" min="0" step="10000"> 원</span>
+    <span>10만 이상 ≥ <input type="number" id="th10" min="0" step="10000"> 원</span>
+    <span>20만 이상 ≥ <input type="number" id="th20" min="0" step="10000"> 원</span>
+    <label><input type="checkbox" id="dedupe"> 케어메이트도 최대 구간 하나로만 집계</label>
+  </div>
+</div>
+
+<script>
+const SUPA_URL="https://usxzzgkewedyxrkkzudc.supabase.co";
+const SUPA_KEY="sb_publishable_t_h3yZy5I8_k6UK3qaLIeA_V9CU1-E2";
+const NAME_BY_EMAIL={"gjdmswo@center-hub.app":"허은재","ghddudal@center-hub.app":"홍영미","whthgus@center-hub.app":"조소현","rlaalthd@center-hub.app":"김미송","dlthdbs@center-hub.app":"이소윤","dldmswjd@center-hub.app":"이은정","rhqjatjr@center-hub.app":"고범석","master@center-hub.app":"마스터"};
+const CENTERS=["조소현","허은재","홍영미","이소윤","이은정","김미송"];
+const TIERS=["케어메이트","10만 이상","20만 이상"];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const won=n=>Math.round(n||0).toLocaleString("ko-KR");
+const man=n=>(Math.round(n/1000)/10).toLocaleString("ko-KR")+"만원";
+const bnum=b=>parseInt((b||"").replace(/\D/g,""))||0;
+const bshort=b=>bnum(b)+"지점";
+let sb,me="",targets=[],perf=new Map(),meta=null,cmap=new Map();
+let noteKey=null,notesCur=[],noteMgr=null,tab="b",center="전체",branch="전체",fil="all",selB="전체",selM="전체",selCode=null;
+let TH={"케어메이트":100000,"10만 이상":100000,"20만 이상":200000},DEDUPE=false,loaded=false;
+try{const s=JSON.parse(localStorage.getItem("goal.opts2")||"null");if(s){TH=s.TH||TH;DEDUPE=!!s.DEDUPE}}catch(e){}
+function toast(t){const e=document.createElement("div");e.className="toast";e.textContent=t;document.body.append(e);setTimeout(()=>e.remove(),2500)}
+
+/* ---- 사람(코드)당 목표 구간 정리 ---- */
+function byName(n){   // 지점이 달라도 이름이 하나뿐이면 그 센터장으로 (지점 이동 대비)
+  const s=new Set();cmap.forEach((c,k)=>{if(k.split("|")[1]===n)s.add(c)});return s.size===1?[...s][0]:null}
+function buildPeople(rows){
+  const m=new Map();
+  rows.forEach(r=>{
+    let p=m.get(r.code);
+    if(!p){p={code:r.code,name:r.name,agency:r.agency,branch:r.branch,head:r.branch_head,mgr:r.manager,note:r.note||"",tiers:new Set()};m.set(r.code,p)}
+    p.tiers.add(r.tier);if(r.note&&!p.note)p.note=r.note;
+  });
+  const out=[];
+  m.forEach(p=>{
+    const t=p.tiers;
+    p.main=t.has("20만 이상")?"20만 이상":t.has("10만 이상")?"10만 이상":null;   // 20만 목표는 10만 목표를 포함 → 최대 구간만
+    p.care=t.has("케어메이트");
+    p.eff=DEDUPE?[p.main||(p.care?"케어메이트":null)].filter(Boolean):[...(p.care?["케어메이트"]:[]),...(p.main?[p.main]:[])];
+    const pf=perf.get(p.code)||{};p.perf=pf.perf||0;p.cnt=pf.cnt||0;
+    p.quit=/해촉/.test(p.note);
+    p.hit={};p.eff.forEach(x=>p.hit[x]=p.perf>=TH[x]);
+    p.center=cmap.get(bnum(p.branch)+"|"+p.mgr)||byName(p.mgr)||"미지정";
+    p.allHit=p.eff.length>0&&p.eff.every(x=>p.hit[x]);
+    const un=p.eff.filter(x=>!p.hit[x]);
+    p.next=un.length?un.reduce((a,b)=>TH[a]>=TH[b]?a:b):null;
+    p.remain=p.next?TH[p.next]-p.perf:0;
+    out.push(p);
+  });
+  return out;
+}
+const blank=()=>({"케어메이트":[0,0],"10만 이상":[0,0],"20만 이상":[0,0]});
+const addTo=(o,p)=>p.eff.forEach(x=>{o[x][0]++;if(p.hit[x])o[x][1]++});
+function people(){return buildPeople(targets).filter(p=>!p.quit)}
+function scoped(all){return all.filter(p=>(center==="전체"||p.center===center)&&(branch==="전체"||p.branch===branch))}
+
+const cellHtml=(c)=>{const [t,a]=c,pc=t?Math.round(a/t*100):100,full=t===a;
+  return `<div class="m3"><b class="${t?"":"z"}">${a}</b> / ${t}${full?`<span class="ok">✓${t?"":" 0명"}</span>`:""}<div class="mini ${full?"full":""}"><i style="width:${pc}%"></i></div></div>`};
+
+function render(){
+  $("#thC").value=TH["케어메이트"];$("#th10").value=TH["10만 이상"];$("#th20").value=TH["20만 이상"];$("#dedupe").checked=DEDUPE;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.tab===tab));
+  $("#vb").hidden=tab!=="b";$("#vp").hidden=tab!=="p";
+  if(!loaded)return;
+  if(!targets.length){$("#centers").innerHTML="";$("#kpis").innerHTML="";$("#branches").innerHTML="";$("#vp").hidden=true;
+    $("#bgrid").innerHTML=`<div class="card empty" style="grid-column:1/-1">아직 올린 자료가 없습니다.<br>오른쪽 위 <b>엑셀 올리기</b>로 「대상자관리(취합,실적진척).xlsx」를 올려 주세요.</div>`;return}
+  const all=people();
+  const inC=all.filter(p=>center==="전체"||p.center===center);
+  $("#centers").innerHTML=`<span class="lbl">센터장</span>`+["전체",...CENTERS,...(all.some(p=>p.center==="미지정")?["미지정"]:[])].map(c=>`<button type="button" class="pill ${center===c?"on":""}" data-c="${c}">${c}<small>${(c==="전체"?all:all.filter(p=>p.center===c)).length}</small></button>`).join("");
+  const brs=[...new Set(inC.map(p=>p.branch))].sort((a,b)=>bnum(a)-bnum(b));
+  if(branch!=="전체"&&!brs.includes(branch))branch="전체";
+  if(tab==="b")renderB(all,brs);else renderP(all,brs);
+}
+
+/* ---- 지점별 매니저 현황 ---- */
+function renderB(all,brs){
+  $("#branches").innerHTML=`<span class="lbl">지점</span>`+["전체",...brs].map(b=>`<button type="button" class="pill ${branch===b?"on":""}" data-b="${esc(b)}">${b==="전체"?b:bshort(b)}</button>`).join("");
+  const view=scoped(all),k=blank();view.forEach(p=>addTo(k,p));
+  const paid=view.filter(p=>p.perf>0).length;
+  $("#kpis").innerHTML=`<div class="card kpi"><div class="l">대상 인원</div><div class="b">${view.length}<small>명</small></div><div class="mu">실적 있는 사람 ${paid}명</div></div>`+
+    TIERS.map(t=>{const [a,b]=[k[t][1],k[t][0]],pc=b?Math.round(a/b*100):0;return `<div class="card kpi"><div class="l">${t}</div><div class="b">${a}<small> / ${b}명</small></div><div class="bar"><i style="width:${pc}%"></i></div><div class="mu">달성률 ${b?pc+"%":"목표 없음"}</div></div>`}).join("");
+  const byB=new Map();
+  view.forEach(p=>{if(!byB.has(p.branch))byB.set(p.branch,{head:p.head,m:new Map()});const b=byB.get(p.branch);if(!b.m.has(p.mgr))b.m.set(p.mgr,[]);b.m.get(p.mgr).push(p)});
+  $("#bgrid").innerHTML=[...byB.keys()].sort((a,b)=>bnum(a)-bnum(b)).map(bk=>{
+    const B=byB.get(bk),sub=blank();let n=0;B.m.forEach(l=>l.forEach(p=>{addTo(sub,p);n++}));
+    const rows=[...B.m.entries()].sort((a,b)=>a[0].localeCompare(b[0],"ko")).map(([mg,l])=>{
+      const c=blank();l.forEach(p=>addTo(c,p));
+      return `<div class="mrow" data-m="${esc(bk+"|"+mg)}"><div class="nm"><b>${esc(mg)}</b><div>${l.length}명${center==="전체"&&l[0].center!=="미지정"?" · "+esc(l[0].center):""}</div></div>${TIERS.map(t=>cellHtml(c[t])).join("")}</div>`}).join("");
+    return `<div class="card bc" id="bc-${bnum(bk)}"><div class="hd2"><h3>${bshort(bk)} <span class="mu">지점장 ${esc(B.head)}</span></h3><span class="mu">대상 ${n}명</span><span data-html2canvas-ignore style="display:flex;gap:6px"><button type="button" class="sbtn" data-img="copy" data-t="bc-${bnum(bk)}" data-n="${bshort(bk)}_매니저현황">📋 이미지 복사</button><button type="button" class="sbtn" data-img="save" data-t="bc-${bnum(bk)}" data-n="${bshort(bk)}_매니저현황">🖼 이미지 저장</button></span></div>
+      <div class="mrow th"><div>매니저</div><div>케어메이트</div><div>10만 이상</div><div>20만 이상</div></div>${rows}
+      <div class="mrow tot"><div>지점 합계</div>${TIERS.map(t=>cellHtml(sub[t])).join("")}</div></div>`}).join("")||`<div class="card empty" style="grid-column:1/-1">조건에 맞는 자료가 없습니다.</div>`;
+}
+
+/* ---- 사용인 목록 ---- */
+const ak=s=>(s||"").replace(/\(주\)|㈜|주식회사|\(유\)|유한회사/g,"").replace(/^[\s()]+/,"");   // 정렬용: (주) 등 제거
+const FIL=[["all","전체"],["hit","목표 달성"],["miss","미달"],["t20","20만 이상 대상"],["t10","10만 이상 대상"],["care","케어메이트 대상"],["paid","실적 있음"]];
+const fpass=(p,f)=>f==="all"||(f==="hit"&&p.allHit)||(f==="miss"&&!p.allHit)||(f==="t20"&&p.main==="20만 이상")||(f==="t10"&&p.main==="10만 이상")||(f==="care"&&p.care)||(f==="paid"&&p.perf>0);
+function renderP(all,brs){
+  const base=scoped(all);
+  const mgrs=[...new Set(base.map(p=>p.mgr))].sort((a,b)=>a.localeCompare(b,"ko"));
+  if(selM!=="전체"&&!mgrs.includes(selM))selM="전체";
+  $("#selB").innerHTML=["전체",...brs].map(b=>`<option value="${esc(b)}" ${branch===b?"selected":""}>${b==="전체"?"전체 지점":bshort(b)}</option>`).join("");
+  $("#selM").innerHTML=["전체",...mgrs].map(m=>`<option value="${esc(m)}" ${selM===m?"selected":""}>${m==="전체"?"전체 매니저":esc(m)}</option>`).join("");
+  const kw=$("#q").value.trim();
+  const sc=base.filter(p=>(selM==="전체"||p.mgr===selM)&&(!kw||[p.name,p.agency,p.code,p.mgr].some(x=>(x||"").includes(kw))));
+  $("#filters").innerHTML=`<span class="lbl">대상 선택</span>`+FIL.map(([k,l])=>`<button type="button" class="pill ${fil===k?"on":""}" data-f="${k}">${l}<small>${sc.filter(p=>fpass(p,k)).length}/${sc.length}</small></button>`).join("");
+  const list=sc.filter(p=>fpass(p,fil)).sort((a,b)=>a.mgr.localeCompare(b.mgr,"ko")||ak(a.agency).localeCompare(ak(b.agency),"ko")||a.name.localeCompare(b.name,"ko")||a.code.localeCompare(b.code));   // 지사명 → 사용인명 가나다순
+  // 오늘 챙길 5명: 달성까지 가장 적게 남은 사람
+  const fo=sc.filter(p=>!p.allHit&&p.perf>0).sort((a,b)=>a.remain-b.remain).slice(0,5);
+  $("#focus").innerHTML=`<h2>오늘 챙길 ${fo.length}명<small>달성까지 적게 남은 순 · 실적이 있는 미달 사용인</small></h2>`+(fo.length?`<div class="fgrid">${fo.map((p,i)=>`<div class="fc" data-p="${esc(p.code)}"><span class="rk">${i+1}</span><b>${esc(p.name)}</b><div class="ag">${esc(p.agency)}</div><div class="nx"><em>${man(p.remain)}</em> 더 → ${p.next}</div><div class="mu">${esc(p.mgr)} · 현재 ${man(p.perf)}</div></div>`).join("")}</div>`:`<div class="mu">대상이 없습니다.</div>`);
+  $("#cnt").textContent=`${list.length}명`;
+  $("#plist").innerHTML=`<div style="padding:12px 16px;border-bottom:1px solid var(--ln)"><b style="font-size:17px">${esc(selM==="전체"?"사용인 목록":selM+" 매니저 사용인 목록")}</b> <span class="mu">${[center!=="전체"?center+" 센터장":"",branch!=="전체"?bshort(branch):"",FIL.find(x=>x[0]===fil)[1]].filter(Boolean).join(" · ")} · ${list.length}명</span></div>`+(list.length?`<table><thead><tr><th>매니저</th><th>대리점(지사)</th><th>사용인</th><th>목표 구간</th><th class="n">실적계</th><th class="n">남은 금액</th><th>달성</th></tr></thead><tbody>${list.slice(0,400).map(p=>`<tr class="pr ${selCode===p.code?"sel":""}" data-p="${esc(p.code)}"><td>${esc(p.mgr)}</td><td>${esc(p.agency)}</td><td><b>${esc(p.name)}</b></td><td>${p.eff.map(e=>`<span class="tag ${e==="20만 이상"?"t20":""}">${e}</span>`).join("")}</td><td class="n">${p.perf?won(p.perf)+"원":"0원"}</td><td class="n">${p.allHit?"-":man(p.remain)}</td><td>${p.eff.map(e=>p.hit[e]?`<span class="tag ok2">${e} ✓</span>`:"").join("")||`<span class="tag no">미달</span>`}</td></tr>`).join("")}</tbody></table>${list.length>400?`<div class="empty">상위 400명만 표시했습니다. 조건을 좁혀 주세요.</div>`:""}`:`<div class="empty">조건에 맞는 사용인이 없습니다.</div>`);
+  const p=selCode&&all.find(x=>x.code===selCode);
+  $("#side").innerHTML=p?`<h3>${esc(p.name)}</h3><div class="mu">${esc(p.agency)}</div>
+    <div class="kv"><span>코드</span><span>${esc(p.code)}</span><span>지점</span><span>${bshort(p.branch)} · 지점장 ${esc(p.head)}</span><span>매니저</span><span>${esc(p.mgr)}${p.center!=="미지정"?" ("+esc(p.center)+" 센터장)":""}</span><span>목표 구간</span><span>${p.eff.map(e=>`<span class="tag ${e==="20만 이상"?"t20":""}">${e}</span>`).join("")}</span><span>실적계</span><span><b>${won(p.perf)}원</b> (${p.cnt}건)</span></div>
+    ${p.eff.map(e=>{const pc=Math.min(100,Math.round(p.perf/TH[e]*100));return `<div style="margin-top:10px"><b>${e}</b> <span class="mu">기준 ${won(TH[e])}원</span> ${p.hit[e]?`<span class="ok">✓ 달성</span>`:`<span class="tag no">${man(TH[e]-p.perf)} 남음</span>`}<div class="bar ${p.hit[e]?"g":""}"><i style="width:${pc}%"></i></div></div>`}).join("")}`
+    :`<div class="empty">목록에서 사용인을 선택하면 상세가 표시됩니다</div>`;
+  mgrNote(base);
+}
+
+/* ---- 매니저 코칭노트 (매니저코칭노트와 같은 저장소 coach_notes 사용) ---- */
+let codeMap=new Map(),coachBr=new Map();
+const today=()=>{const d=new Date(),p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`};
+async function loadNotes(){
+  const {data,error}=await sb.from("coach_notes").select("*").eq("manager_code",noteMgr.code).order("note_date",{ascending:false}).order("created_at",{ascending:false});
+  if(error){$("#nhist").innerHTML=`<div class="mu">기록을 불러오지 못했습니다. coach-notes.sql 실행 여부를 확인해 주세요.</div>`;return}
+  notesCur=data;histHtml();
+}
+function histHtml(){
+  const el=$("#nhist");if(!el)return;
+  el.innerHTML=notesCur.length?notesCur.map(n=>`<div class="it"><div class="mt"><b style="color:var(--ink)">${n.note_date}</b><span>${esc(n.method)}</span><span>작성자 <b style="color:var(--ink)">${esc(n.written_by||"미상")}</b></span>${n.written_by===me?`<button type="button" class="sbtn" data-ne="${n.id}">수정</button><button type="button" class="sbtn d" data-nx="${n.id}">삭제</button>`:""}</div><p>${esc(n.note)}</p></div>`).join(""):`<div class="mu">아직 기록이 없습니다.</div>`;
+}
+function mgrNote(base){
+  const box=$("#cnote");
+  if(selM==="전체"){box.hidden=true;noteKey=null;return}
+  const p=base.find(x=>x.mgr===selM);if(!p){box.hidden=true;noteKey=null;return}
+  const key=bnum(p.branch)+"|"+selM;
+  box.hidden=false;
+  if(noteKey===key)return;           // 입력 중인 내용이 지워지지 않도록 같은 매니저면 다시 그리지 않음
+  noteKey=key;
+  const cm=coachBr.get(key);
+  noteMgr={code:cm?cm.code:"g"+key,name:selM,branch:cm?cm.branch:bshort(p.branch).replace("지점","")?("충청GA-"+bnum(p.branch)+"지점"):p.branch,center:p.center==="미지정"?"":p.center};
+  notesCur=[];editNote=null;
+  box.innerHTML=`<h3 style="margin:0;font-size:18px">📝 ${esc(selM)} 매니저 코칭노트</h3><div class="mu" style="margin-bottom:8px">${bshort(p.branch)}${p.center!=="미지정"?" · "+esc(p.center)+" 센터장":""}</div>
+   <form class="nf" id="nf" novalidate><div class="r2"><label>일자<input type="date" id="nDate" value="${today()}"></label><label>방식<select id="nMethod"><option>대면</option><option>유선</option></select></label></div>
+   <label>작성자<input id="nBy" readonly value="${esc(me)}" style="background:#f3f2ef"></label>
+   <label>코칭내용<textarea id="nNote" placeholder="코칭한 내용을 적어 주세요."></textarea></label>
+   <div id="nErr" class="mu" style="color:var(--red)" hidden></div>
+   <div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="sbtn" id="nCancel" hidden>수정 취소</button><button type="submit" class="btnp" id="nSave">저장</button></div></form>
+   <b style="display:block;margin-top:12px">이전 코칭 기록</b><div class="nh" id="nhist"><div class="mu">불러오는 중…</div></div>`;
+  $("#nf").onsubmit=saveNote;
+  $("#nCancel").onclick=()=>{editNote=null;$("#nNote").value="";$("#nDate").value=today();$("#nSave").textContent="저장";$("#nCancel").hidden=true};
+  loadNotes();
+}
+let editNote=null;
+async function saveNote(e){
+  e.preventDefault();
+  const note=$("#nNote").value.trim(),date=$("#nDate").value,er=m=>{$("#nErr").textContent=m;$("#nErr").hidden=false};
+  if(!date)return er("일자를 입력해 주세요.");if(!note)return er("코칭내용을 적어 주세요.");
+  const row={note_date:date,method:$("#nMethod").value,note,updated_at:new Date().toISOString()};
+  let r;
+  if(editNote)r=await sb.from("coach_notes").update(row).eq("id",editNote);
+  else r=await sb.from("coach_notes").insert({...row,manager_code:noteMgr.code,manager_name:noteMgr.name,branch:noteMgr.branch,center:noteMgr.center,written_by:me});
+  if(r.error)return er("저장하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+  toast(editNote?"수정했습니다":"코칭 내용을 저장했습니다");
+  editNote=null;$("#nNote").value="";$("#nSave").textContent="저장";$("#nCancel").hidden=true;$("#nErr").hidden=true;await loadNotes();
+}
+document.addEventListener("click",async e=>{
+  const ed=e.target.closest("[data-ne]"),dx=e.target.closest("[data-nx]");
+  if(ed){const n=notesCur.find(x=>x.id===ed.dataset.ne);if(!n)return;editNote=n.id;$("#nDate").value=n.note_date;$("#nMethod").value=n.method;$("#nNote").value=n.note;$("#nSave").textContent="수정 저장";$("#nCancel").hidden=false;$("#nNote").focus()}
+  if(dx){if(!dx.dataset.arm){dx.dataset.arm=1;dx.textContent="한 번 더 누르면 삭제";return}
+    const {error}=await sb.from("coach_notes").delete().eq("id",dx.dataset.nx);if(error)toast("삭제하지 못했습니다");else{toast("삭제했습니다");loadNotes()}}
+});
+
+/* ---- 이미지 복사/저장 ---- */
+async function exportImg(id,mode,name){
+  const el=document.getElementById(id);if(!el)return;
+  if(!window.html2canvas){toast("이미지 도구를 불러오지 못했습니다.");return}
+  toast("이미지 만드는 중…");
+  try{
+    const cv=await html2canvas(el,{scale:2,backgroundColor:"#ffffff",useCORS:true});
+    const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
+    if(!blob)throw 0;
+    let fn=name==="list"?(selM==="전체"?"사용인목록":selM+"_사용인목록"):name;
+    fn=`${fn}_${today()}.png`;
+    if(mode==="save"){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=fn;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast("이미지를 저장했습니다")}
+    else{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);toast("이미지를 복사했습니다. 붙여넣기(Ctrl+V) 하세요")}
+  }catch(e){toast(mode==="copy"?"복사하지 못했습니다. 이미지 저장을 사용해 주세요.":"이미지를 만들지 못했습니다.")}
+}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-img]");if(b)exportImg(b.dataset.t,b.dataset.img,b.dataset.n)});
+
+/* ---- 불러오기 ---- */
+async function fetchAll(table,cols){
+  let out=[];
+  for(let f=0;;f+=1000){const {data,error}=await sb.from(table).select(cols||"*").range(f,f+999);if(error)throw error;out=out.concat(data);if(data.length<1000)break}
+  return out;
+}
+async function load(){
+  try{
+    const [t,p,m]=await Promise.all([fetchAll("goal_targets"),fetchAll("goal_perf"),sb.from("goal_meta").select("*").eq("id","main").maybeSingle()]);
+    targets=t;perf=new Map(p.map(r=>[r.code,{perf:+r.perf||0,cnt:r.cnt||0}]));meta=m.data;
+    $("#notice").hidden=true;
+  }catch(e){$("#notice").hidden=false;$("#notice").textContent="서버에서 자료를 불러오지 못했습니다. 수퍼베이스에서 goal.sql 을 실행했는지 확인해 주세요.";targets=[]}
+  cmap=new Map();
+  try{ // 센터장 매핑: goal_centers (없으면 매니저코칭노트 명단으로 대체)
+    const r=await fetchAll("goal_centers","branch_no,manager,center");r.forEach(x=>cmap.set(x.branch_no+"|"+x.manager,x.center));
+  }catch(e){}
+  if(!cmap.size){try{const r=await fetchAll("coach_managers","name,branch,center");r.forEach(x=>cmap.set(bnum(x.branch)+"|"+x.name,x.center))}catch(e){}}
+  coachBr=new Map();
+  try{const r=await fetchAll("coach_managers","code,name,branch");r.forEach(x=>coachBr.set(bnum(x.branch)+"|"+x.name,{code:x.code,branch:x.branch}))}catch(e){}
+  loaded=true;
+  $("#metaLine").textContent=meta?`${new Date(meta.updated_at).toLocaleString("ko-KR")} 업로드 기준 · ${meta.updated_by} (${meta.file_name})`:"자료를 올리면 목표·실적이 표시됩니다.";
+  render();
+}
+
+/* ---- 엑셀 올리기 (취합 + 집계현황) ---- */
+const cl=s=>String(s??"").replace(/\s+/g," ").trim();
+/* 목표 구분 문자열 → 목표 구간 목록
+   예) "20만 이상", "10만이상", "20만달성", "케어메이트", "①-10만 ②-20만 ③케어" (①=10만 이상, ②=20만 이상, ③=케어메이트) */
+function tiersOf(raw){
+  const s=String(raw||"").replace(/\s/g,"");
+  if(!s)return [];
+  const out=new Set();
+  if(/[①②③]/.test(s)){
+    if(s.includes("①"))out.add("10만 이상");
+    if(s.includes("②"))out.add("20만 이상");
+    if(s.includes("③")||s.includes("케어"))out.add("케어메이트");
+  }else{
+    if(s.includes("케어"))out.add("케어메이트");
+    if(s.includes("20만"))out.add("20만 이상");
+    if(s.includes("10만"))out.add("10만 이상");
+  }
+  return [...out];
+}
+function parseWorkbook(wb){
+  const sn=n=>wb.SheetNames.find(x=>x.replace(/\s/g,"").includes(n));
+  const s1=sn("취합"),s2=sn("집계현황");
+  if(!s1)throw new Error("「취합」 시트를 찾지 못했습니다.");
+  if(!s2)throw new Error("「집계현황」 시트를 찾지 못했습니다.");
+  const a=XLSX.utils.sheet_to_json(wb.Sheets[s1],{header:1,defval:""});
+  const hi=a.findIndex(r=>r.some(c=>cl(c)==="목표 구분")&&r.some(c=>cl(c)==="코드"));
+  if(hi<0)throw new Error("「취합」 시트에서 지점·코드·목표 구분 제목 줄을 찾지 못했습니다.");
+  const H=a[hi].map(cl),ix=n=>H.indexOf(n);
+  const col={branch:ix("지점"),head:ix("지점장"),mgr:ix("매니저"),agency:ix("지사"),code:ix("코드"),name:ix("사용인"),tier:ix("목표 구분")};
+  if(Object.values(col).some(v=>v<0))throw new Error("「취합」 시트의 제목(지점, 지점장, 매니저, 지사, 코드, 사용인, 목표 구분)이 맞지 않습니다.");
+  const note=col.tier+1,T=new Map();
+  a.slice(hi+1).forEach(r=>{
+    const code=cl(r[col.code]);
+    if(!code)return;
+    tiersOf(cl(r[col.tier])).forEach(tier=>{
+      T.set(code+"|"+tier,{code,tier,branch:cl(r[col.branch]).replace(/지점$/,""),branch_head:cl(r[col.head]),manager:cl(r[col.mgr]),agency:cl(r[col.agency]),name:cl(r[col.name]),note:cl(r[note])});
+    });
+  });
+  const b=XLSX.utils.sheet_to_json(wb.Sheets[s2],{header:1,defval:""});
+  const hb=b.findIndex(r=>cl(r[0]).includes("영업가족")&&r.some(c=>cl(c)==="실적계"));
+  if(hb<0)throw new Error("「집계현황」 시트에서 영업가족조직코드·실적계 제목 줄을 찾지 못했습니다.");
+  const HB=b[hb].map(cl),zi=HB.indexOf("실적계"),yi=HB.indexOf("건수계"),P=new Map();
+  b.slice(hb+1).forEach(r=>{const code=cl(r[0]);if(!code)return;P.set(code,{code,perf:Number(String(r[zi]).replace(/,/g,""))||0,cnt:yi>=0?(Number(r[yi])||0):0})});
+  return {t:[...T.values()],p:[...P.values()]};
+}
+async function chunked(table,rows){for(let i=0;i<rows.length;i+=500){const {error}=await sb.from(table).insert(rows.slice(i,i+500));if(error)throw error}}
+async function upload(file){
+  try{
+    toast("엑셀을 읽는 중…");
+    const wb=XLSX.read(await file.arrayBuffer(),{type:"array"});
+    const {t,p}=parseWorkbook(wb);
+    if(!t.length)throw new Error("목표 명단이 비어 있습니다.");
+    if(!confirm(`목표 ${t.length}건(사용인 ${new Set(t.map(x=>x.code)).size}명), 실적 ${p.length}건을 올립니다.\n지금 저장된 자료를 이 파일 내용으로 바꿉니다. 계속할까요?`))return;
+    toast("저장 중…");
+    let r=await sb.from("goal_targets").delete().neq("code","");if(r.error)throw r.error;
+    r=await sb.from("goal_perf").delete().neq("code","");if(r.error)throw r.error;
+    await chunked("goal_targets",t);await chunked("goal_perf",p);
+    r=await sb.from("goal_meta").upsert({id:"main",updated_at:new Date().toISOString(),updated_by:me,file_name:file.name,target_rows:t.length,perf_rows:p.length});if(r.error)throw r.error;
+    toast("올렸습니다");await load();
+  }catch(e){alert("올리지 못했습니다.\n"+(e&&e.message?e.message:"잠시 후 다시 시도해 주세요."));load()}
+}
+
+document.addEventListener("click",e=>{
+  const t=e.target.closest(".tab");if(t){tab=t.dataset.tab;render();return}
+  const c=e.target.closest("[data-c]");if(c){center=c.dataset.c;branch="전체";selM="전체";render();return}
+  const b=e.target.closest("[data-b]");if(b){branch=b.dataset.b;render();return}
+  const f=e.target.closest("[data-f]");if(f){fil=f.dataset.f;render();return}
+  const m=e.target.closest("[data-m]");if(m){const [bk,mg]=m.dataset.m.split("|");branch=bk;selM=mg;fil="all";tab="p";selCode=null;$("#q").value="";render();window.scrollTo(0,0);return}
+  const p=e.target.closest("[data-p]");if(p){selCode=p.dataset.p;render()}
+});
+$("#selB").onchange=e=>{branch=e.target.value;selM="전체";render()};
+$("#selM").onchange=e=>{selM=e.target.value;render()};
+$("#q").oninput=render;
+$("#upBtn").onclick=()=>$("#xf").click();
+$("#xf").onchange=e=>{const f=e.target.files[0];e.target.value="";if(f)upload(f)};
+const saveOpts=()=>{try{localStorage.setItem("goal.opts2",JSON.stringify({TH,DEDUPE}))}catch(e){}};
+$("#thC").onchange=e=>{TH["케어메이트"]=+e.target.value||0;saveOpts();render()};
+$("#th10").onchange=e=>{TH["10만 이상"]=+e.target.value||0;saveOpts();render()};
+$("#th20").onchange=e=>{TH["20만 이상"]=+e.target.value||0;saveOpts();render()};
+$("#dedupe").onchange=e=>{DEDUPE=e.target.checked;saveOpts();render()};
+
+(async()=>{
+  render();
+  if(!window.supabase){$("#notice").hidden=false;$("#notice").textContent="서버 연결 라이브러리를 불러오지 못했습니다.";return}
+  sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+  const {data}=await sb.auth.getSession();
+  if(!data.session){location.replace("index.html");return}
+  me=NAME_BY_EMAIL[data.session.user.email]||data.session.user.email;
+  if(CENTERS.includes(me))center=me;
+  await load();
+  let t;sb.channel("goal-live").on("postgres_changes",{event:"*",schema:"public",table:"goal_meta"},()=>{clearTimeout(t);t=setTimeout(load,500)}).subscribe();
+})();
+</script>
+</body>
+</html>
