@@ -68,7 +68,7 @@ select.nt{appearance:none;-webkit-appearance:none;cursor:pointer;width:64px}
   <div class="bar" id="brs"></div>
   <div class="sheet" id="sheet"><div class="empty">불러오는 중…</div></div>
   
-  <div class="mu">12시 사용건수가 전일 사용건수보다 적으면 빨강 · 매핑실적이 비었거나 음수이면 빨강 · 정보공유는 로그인한 센터장 누구나 버튼으로 체크하고, 다시 눌러 취소할 수 있습니다. 날짜별로 따로 기록됩니다.</div>
+  <div class="mu">엠톡 사용건수(전일·12시)가 0건이거나 12시 사용건수가 전일보다 적으면 빨강 · 11:30 가계약이 15건 미만(0건·빈칸 포함)이면 빨강(전일 가계약은 색 없음) · 매핑실적이 0이거나 음수(-)이거나 빈칸이면 빨강 · 정보공유는 로그인한 센터장 누구나 버튼으로 체크하고, 다시 눌러 취소할 수 있습니다. 날짜별로 따로 기록됩니다.</div>
 </div>
 <script>
 const SUPA_URL="https://usxzzgkewedyxrkkzudc.supabase.co";
@@ -109,10 +109,10 @@ function render(){
     l.forEach(r=>{
       const c=checks.get(r.code)||{},on=!!c.shared;
       h+=`<tr><td class="l">충청GA-${bnum(b)}지점</td><td>${esc(r.code)}</td><td class="l"><span class="nm">${esc(r.name)}</span></td><td class="${r.grade==="AM"?"grade-am":r.grade==="GSM"?"grade-gsm":""}">${esc(r.grade)}</td>
-      <td>${f(r.prev_use)}</td><td class="${r.noon_use!=null&&r.prev_use!=null&&r.noon_use<r.prev_use?"bad":"good"}">${f(r.noon_use)}</td>
+      <td class="${r.prev_use===0?"bad":""}">${f(r.prev_use)}</td><td class="${r.noon_use===0||(r.noon_use!=null&&r.prev_use!=null&&r.noon_use<r.prev_use)?"bad":"good"}">${f(r.noon_use)}</td>
       <td class="${on?"good":""}"><button class="chk ${on?"on":""}" data-code="${esc(r.code)}" title="${on?esc((c.checked_by||"")+" 체크 · 다시 누르면 취소"):"눌러서 공유 체크"}">${on?"✔ 공유":"미확인"}</button></td>
-      <td class="good">${f(r.prev_contract)}</td><td class="good">${f(r.c1130)}</td>
-      <td class="${r.mapping==null||r.mapping<0?"bad":"good"}">${r.mapping==null?"":f(r.mapping)}</td>
+      <td>${f(r.prev_contract)}</td><td class="${r.c1130==null||r.c1130<15?"bad":"good"}">${f(r.c1130)}</td>
+      <td class="${r.mapping==null||r.mapping<=0?"bad":"good"}">${r.mapping==null?"":f(r.mapping)}</td>
       <td><select class="nt ${c.note?"has":""}" data-note="${esc(r.code)}"><option value=""></option>${NOTE_OPTS.concat(c.note&&!NOTE_OPTS.includes(c.note)?[c.note]:[]).map(o=>`<option ${o===c.note?"selected":""}>${esc(o)}</option>`).join("")}</select></td></tr>`;
     });
     h+=`<tr class="sub"><td class="l">${bnum(b)}지점 합계</td><td></td><td></td><td></td><td>${f(sum(l,"prev_use"))}</td><td class="good">${f(sum(l,"noon_use"))}</td><td>${l.filter(r=>(checks.get(r.code)||{}).shared).length} / ${l.length}</td><td class="good">${f(sum(l,"prev_contract"))}</td><td class="good">${f(sum(l,"c1130"))}</td><td>${f(sum(l,"mapping"))}</td><td></td></tr>`;
