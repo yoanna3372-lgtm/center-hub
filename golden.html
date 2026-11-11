@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>본부골든룰</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{--bg:#f4f4f2;--ink:#1b1b1b;--mu:#6a6a68;--ln:#dedcd8;--red:#c8281e;--maroon:#8b1e2d;--slate:#44566c;--amber:#b35c00;--purple:#6b2d7a;--blue:#4472c4;--gd:#dbe9d6;--rd:#f4cccc}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 "Malgun Gothic","Apple SD Gothic Neo",sans-serif}
+header.hd{background:#000;color:#fff;padding:14px 24px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.hd .sm{font-size:11px;color:#ffb3a8;font-style:italic}.hd h1{margin:0;font-size:24px;font-weight:800}.hd h1 b{color:#ff5a4a}
+.hbtn{border:1px solid #bbb;background:transparent;color:#fff;border-radius:6px;padding:7px 14px;font:inherit;font-size:14px;text-decoration:none;cursor:pointer}
+.hbtn.p{background:var(--red);border-color:var(--red)}
+.hubnav{display:flex;gap:6px;padding:10px 24px 0;background:#fff;border-bottom:3px solid #c8281e;overflow-x:auto}
+.hubnav a{border:1px solid #dedcd8;border-bottom:0;background:#f0efec;border-radius:8px 8px 0 0;padding:8px 18px;font-size:14px;color:#6a6a68;white-space:nowrap;font-weight:700;text-decoration:none;margin-bottom:-3px}
+.hubnav a.on{background:#fff;color:#c8281e;border-color:#c8281e;border-bottom:3px solid #fff}
+.wrap{padding:16px 20px 60px;display:grid;gap:12px}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bar input,.bar select{font:inherit;border:1px solid var(--ln);border-radius:8px;padding:7px 10px;background:#fff}
+.pill{border:1px solid var(--ln);background:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font:inherit}
+.pill.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+.btn{border:1px solid var(--ln);background:#fff;border-radius:6px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.sheet{background:#fff;border:1px solid var(--ln);border-radius:6px;overflow-x:auto}
+.title{display:flex;align-items:center;background:var(--maroon);color:#fff;font-weight:800;font-size:22px;padding:10px 18px;width:max-content;min-width:300px}
+.title i{display:inline-block;width:20px;height:20px;background:#fff;margin-right:12px}
+.date{font-size:20px;font-weight:800;padding:10px 12px}
+table{border-collapse:collapse;width:100%;min-width:980px;font-size:13px}
+th,td{border:1px solid #e4e1dc;padding:6px 8px;text-align:center;white-space:nowrap}
+th{color:#fff;font-weight:700}
+.g-base{background:#3a3a3a}.g-red{background:var(--maroon)}.g-slate{background:var(--slate)}.g-amber{background:var(--amber)}.g-purple{background:var(--purple)}.g-blue{background:var(--blue)}
+.s-pink{background:#f7e1e3;color:#6a1a24}.s-green{background:#4d8b33}.s-light{background:#fdebd3;color:#6a3a00}.s-lav{background:#f1dcfb;color:#4a1a66}.s-gray{background:#e3e8ee;color:#334}
+td.l{text-align:left}td.good{background:var(--gd)}td.bad{background:var(--rd);color:#9a1b1b;font-weight:700}
+td.grade-am{background:#fde3d2;color:#c8281e;font-weight:700}td.grade-gsm{background:#d9e8f6;color:#2b5d8a;font-weight:700}
+tr.sub td{background:#f1f0ee;font-weight:800;border-top:2px solid var(--maroon);border-bottom:5px solid #1b1b1b}
+.chk{border:1px solid #bbb;background:#fff;color:#666;border-radius:6px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer}
+.chk.on{background:#2f8f4e;border-color:#2f8f4e;color:#fff;font-weight:700}
+.nm{font-weight:700}.mu{color:var(--mu);font-size:12px}
+.nt{width:150px;font:inherit;font-size:12px;border:1px solid transparent;border-radius:4px;padding:3px 5px;background:transparent}
+.nt:hover,.nt:focus{border-color:var(--ln);background:#fff}
+.empty{padding:40px;text-align:center;color:var(--mu)}
+#notice{background:#fbf0d8;color:#a8720a;padding:10px 14px;border-radius:8px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#000;color:#fff;padding:10px 16px;border-radius:8px;z-index:30;max-width:92vw}
+@media(max-width:700px){header.hd{padding:12px 14px}.hd h1{font-size:19px}.hubnav{padding:8px 10px 0;gap:4px}.hubnav a{padding:7px 12px;font-size:13px}.wrap{padding:12px 8px 50px}.title{font-size:17px}.bar input,.bar select{font-size:16px}}
+</style>
+</head>
+<body>
+<header class="hd"><div><div class="sm">30% 성장을 위하여!</div><h1><b>충청GA본부</b> 본부골든룰</h1><div class="mu" style="color:#cfcfcf" id="meta"></div></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="hbtn" href="index.html">← 센터장 업무허브</a><input type="file" id="xf" accept=".xlsx,.xls,.xlsm" hidden><button class="hbtn p" id="upBtn" type="button">📥 엑셀 올리기</button></div></header>
+<nav class="hubnav"><a href="index.html">🏠 홈</a><a href="index.html#mgr">🧑‍💼 신입지점장 OJT</a><a href="index.html#stf">🧑‍🎓 신입매니저 OJT</a><a href="index.html#mon">📅 월간활동일정</a><a href="coaching.html">📝 매니저코칭노트</a><a href="goal.html">🎯 매니저목표진척</a><a href="golden.html" class="on">🏅 본부골든룰</a></nav>
+<div class="wrap">
+  <div id="notice" hidden></div>
+  <div class="bar">
+    <b>조회일</b><button class="btn" id="prev" type="button">◀</button><input type="date" id="dt"><button class="btn" id="next" type="button">▶</button>
+    <select id="days" title="자료가 있는 날짜"></select>
+    <input id="q" placeholder="매니저·코드 검색" style="width:170px">
+    <span style="margin-left:auto" class="bar"><button class="btn" data-img="copy">📋 이미지 복사</button><button class="btn" data-img="save">🖼 이미지 저장</button></span>
+  </div>
+  <div class="bar" id="brs"></div>
+  <div class="sheet" id="sheet"><div class="empty">불러오는 중…</div></div>
+  <div class="mu">12시 사용건수가 전일 사용건수보다 적으면 빨강 · 매핑실적이 비었거나 음수이면 빨강 · 정보공유는 로그인한 센터장 누구나 버튼으로 체크하고, 다시 눌러 취소할 수 있습니다. 날짜별로 따로 기록됩니다.</div>
+</div>
+<script>
+const SUPA_URL="https://usxzzgkewedyxrkkzudc.supabase.co";
+const SUPA_KEY="sb_publishable_t_h3yZy5I8_k6UK3qaLIeA_V9CU1-E2";
+const NAME_BY_EMAIL={"gjdmswo@center-hub.app":"허은재","ghddudal@center-hub.app":"홍영미","whthgus@center-hub.app":"조소현","rlaalthd@center-hub.app":"김미송","dlthdbs@center-hub.app":"이소윤","dldmswjd@center-hub.app":"이은정","rhqjatjr@center-hub.app":"고범석","master@center-hub.app":"마스터"};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const f=n=>n==null||n===""?"":Number(n).toLocaleString("ko-KR");
+const bnum=b=>parseInt((b||"").replace(/\D/g,""))||0;
+const pad=n=>String(n).padStart(2,"0");
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
+let sb,me="",day="",days=[],rows=[],checks=new Map(),sel=new Set(),loaded=false;
+function toast(t){const e=document.createElement("div");e.className="toast";e.textContent=t;document.body.append(e);setTimeout(()=>e.remove(),2600)}
+const md=s=>s?`${+s.slice(5,7)}월 ${+s.slice(8,10)}일`:"";
+
+function render(){
+  $("#dt").value=day;
+  $("#days").innerHTML=`<option value="">자료 있는 날짜</option>`+days.map(d=>`<option value="${d.day}" ${d.day===day?"selected":""}>${d.day}</option>`).join("");
+  const cur=days.find(d=>d.day===day);
+  $("#meta").textContent=cur?`${md(day)} 자료 · ${cur.uploaded_by||""} 업로드 (${cur.row_count}명)`:"";
+  if(!loaded)return;
+  const brs=[...new Set(rows.map(r=>r.branch))].sort((a,b)=>bnum(a)-bnum(b));
+  [...sel].forEach(b=>{if(!brs.includes(b))sel.delete(b)});
+  $("#brs").innerHTML=brs.length?`<span class="mu">지점 (여러 개 선택 가능)</span><button type="button" class="pill ${sel.size?"":"on"}" data-b="전체">전체</button>`+brs.map(b=>`<button type="button" class="pill ${sel.has(b)?"on":""}" data-b="${esc(b)}">${sel.has(b)?"✔ ":""}${bnum(b)}지점</button>`).join("")+(sel.size?`<span class="mu">${sel.size}개 선택</span>`:""):"";
+  if(!rows.length){$("#sheet").innerHTML=`<div class="empty">${md(day)||"이 날짜"}에 올라온 자료가 없습니다.<br>오른쪽 위 <b>엑셀 올리기</b>로 골든룰 엑셀을 올려 주세요.</div>`;return}
+  const kw=$("#q").value.trim();
+  const vis=rows.filter(r=>(!sel.size||sel.has(r.branch))&&(!kw||r.name.includes(kw)||r.code.includes(kw)));
+  const sum=(l,k)=>l.reduce((s,r)=>s+(Number(r[k])||0),0);
+  let h=`<div class="title"><i></i>충청GA본부 Golden rule</div><div class="date">${md(day)}</div>
+<table><thead>
+<tr><th rowspan="2" class="g-base">지점명</th><th rowspan="2" class="g-base">코드</th><th rowspan="2" class="g-base">매니저</th><th rowspan="2" class="g-base">직책</th>
+<th colspan="2" class="g-red">출근알리기<br>(M-TALK 활용)</th><th class="g-slate">정보공유 활성화</th><th colspan="2" class="g-amber">가계약<br>(15건 / 30건 / 45건 달성)</th><th class="g-purple">매핑실적</th><th rowspan="2" class="g-blue">비고</th></tr>
+<tr><th class="s-pink">전일<br>사용건수</th><th class="s-green">12시<br>사용건수</th><th class="s-gray">공유 체크</th><th class="s-light">전일<br>가계약</th><th class="s-light">11:30</th><th class="s-lav">13:00</th></tr>
+</thead><tbody>`;
+  [...new Set(vis.map(r=>r.branch))].sort((a,b)=>bnum(a)-bnum(b)).forEach(b=>{
+    const l=vis.filter(r=>r.branch===b);
+    l.forEach(r=>{
+      const c=checks.get(r.code)||{},on=!!c.shared;
+      h+=`<tr><td class="l">충청GA-${bnum(b)}지점</td><td>${esc(r.code)}</td><td class="l"><span class="nm">${esc(r.name)}</span></td><td class="${r.grade==="AM"?"grade-am":r.grade==="GSM"?"grade-gsm":""}">${esc(r.grade)}</td>
+      <td>${f(r.prev_use)}</td><td class="${r.noon_use!=null&&r.prev_use!=null&&r.noon_use<r.prev_use?"bad":"good"}">${f(r.noon_use)}</td>
+      <td class="${on?"good":""}"><button class="chk ${on?"on":""}" data-code="${esc(r.code)}" title="${on?esc((c.checked_by||"")+" 체크 · 다시 누르면 취소"):"눌러서 공유 체크"}">${on?"✔ 공유":"미확인"}</button></td>
+      <td class="good">${f(r.prev_contract)}</td><td class="good">${f(r.c1130)}</td>
+      <td class="${r.mapping==null||r.mapping<0?"bad":"good"}">${r.mapping==null?"":f(r.mapping)}</td>
+      <td><input class="nt" data-note="${esc(r.code)}" value="${esc(c.note||"")}" placeholder="비고"></td></tr>`;
+    });
+    h+=`<tr class="sub"><td class="l">${bnum(b)}지점 합계</td><td></td><td></td><td></td><td>${f(sum(l,"prev_use"))}</td><td class="good">${f(sum(l,"noon_use"))}</td><td>${l.filter(r=>(checks.get(r.code)||{}).shared).length} / ${l.length}</td><td class="good">${f(sum(l,"prev_contract"))}</td><td class="good">${f(sum(l,"c1130"))}</td><td>${f(sum(l,"mapping"))}</td><td></td></tr>`;
+  });
+  h+=`</tbody></table>`;
+  $("#sheet").id==="sheet"&&($("#sheet").innerHTML=h);
+}
+
+async function loadDays(){
+  const {data,error}=await sb.from("golden_days").select("*").order("day",{ascending:false}).limit(400);
+  if(error)throw error;days=data;
+}
+async function loadDay(){
+  rows=[];checks=new Map();
+  if(day){
+    const [a,b]=await Promise.all([sb.from("golden_daily").select("*").eq("day",day).order("ord").range(0,2999),sb.from("golden_checks").select("*").eq("day",day).range(0,2999)]);
+    if(a.error)throw a.error;if(b.error)throw b.error;
+    rows=a.data;b.data.forEach(x=>checks.set(x.code,x));
+  }
+}
+async function init(){
+  try{await loadDays();if(!day)day=days[0]?days[0].day:today();await loadDay();$("#notice").hidden=true}
+  catch(e){$("#notice").hidden=false;$("#notice").textContent="서버에서 자료를 불러오지 못했습니다. 수퍼베이스에서 golden.sql 을 실행했는지 확인해 주세요.";rows=[]}
+  loaded=true;render();
+}
+async function go(d){day=d;await loadDay().catch(()=>{rows=[]});render()}
+
+/* ---- 정보공유 체크 / 비고 ---- */
+document.addEventListener("click",async e=>{
+  const c=e.target.closest(".chk");
+  if(c){
+    const code=c.dataset.code,cur=checks.get(code)||{},on=!cur.shared;
+    const rec={day,code,shared:on,checked_by:on?me:"",updated_at:new Date().toISOString()};
+    checks.set(code,{...cur,...rec});render();
+    const {error}=await sb.from("golden_checks").upsert(rec);
+    if(error){toast("저장하지 못했습니다");await loadDay();render()}
+    return;
+  }
+  const b=e.target.closest("[data-b]");if(b){const v=b.dataset.b;if(v==="전체")sel.clear();else if(sel.has(v))sel.delete(v);else sel.add(v);render();return}
+  const im=e.target.closest("[data-img]");if(im)exportImg(im.dataset.img);
+});
+document.addEventListener("change",async e=>{
+  const n=e.target.closest("[data-note]");if(!n)return;
+  const code=n.dataset.note,cur=checks.get(code)||{};
+  const rec={day,code,note:n.value.trim(),updated_at:new Date().toISOString()};
+  checks.set(code,{...cur,...rec});
+  const {error}=await sb.from("golden_checks").upsert(rec);
+  toast(error?"비고를 저장하지 못했습니다":"비고를 저장했습니다");
+});
+$("#q").oninput=render;
+$("#dt").onchange=e=>e.target.value&&go(e.target.value);
+$("#days").onchange=e=>e.target.value&&go(e.target.value);
+$("#prev").onclick=()=>{const i=days.findIndex(d=>d.day===day);const n=days.filter(d=>d.day<day)[0];if(n)go(n.day);else toast("이전 날짜 자료가 없습니다")};
+$("#next").onclick=()=>{const n=[...days].reverse().find(d=>d.day>day);if(n)go(n.day);else toast("다음 날짜 자료가 없습니다")};
+
+/* ---- 이미지 ---- */
+async function exportImg(mode){
+  const el=$("#sheet");if(!window.html2canvas){toast("이미지 도구를 불러오지 못했습니다.");return}
+  toast("이미지 만드는 중…");
+  try{
+    const cv=await html2canvas(el,{scale:2,backgroundColor:"#ffffff",width:el.scrollWidth,windowWidth:Math.max(el.scrollWidth,1200)});
+    const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
+    if(mode==="save"){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`본부골든룰_${day}${sel.size?"_"+[...sel].map(bnum).sort((x,y)=>x-y).join("-")+"지점":""}.png`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast("이미지를 저장했습니다")}
+    else{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);toast("이미지를 복사했습니다. 붙여넣기(Ctrl+V) 하세요")}
+  }catch(e){toast(mode==="copy"?"복사하지 못했습니다. 이미지 저장을 사용해 주세요.":"이미지를 만들지 못했습니다.")}
+}
+
+/* ---- 엑셀 올리기 ---- */
+const cl=s=>String(s??"").replace(/\s+/g,"").trim();
+const num=v=>{if(v===""||v==null)return null;const n=Number(String(v).replace(/,/g,""));return isNaN(n)?null:n};
+function toDay(v){
+  if(typeof v==="number"&&v>30000){const d=new Date(Math.round((v-25569)*86400000));return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`}
+  const m=String(v||"").match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);return m?`${m[1]}-${pad(+m[2])}-${pad(+m[3])}`:null;
+}
+function parseGolden(wb){
+  const ws=wb.Sheets[wb.SheetNames.find(n=>cl(n).includes("골든룰"))||wb.SheetNames[0]];
+  const a=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
+  const hi=a.findIndex(r=>r.some(c=>cl(c)==="코드")&&r.some(c=>cl(c).includes("매니저")));
+  if(hi<0)throw new Error("제목 줄(코드, 매니저 …)을 찾지 못했습니다.");
+  const H=a[hi].map(cl),find=fn=>H.findIndex(fn);
+  const col={day:find(x=>x==="일자"||x==="날짜"||x==="조회일"),branch:find(x=>x.includes("지점")),code:find(x=>x==="코드"),name:find(x=>x.includes("매니저")),grade:find(x=>x.includes("직책")),
+    prev_use:find(x=>x.includes("전일")&&x.includes("사용")),noon_use:find(x=>x.includes("12시")),prev_contract:find(x=>x.includes("전일")&&x.includes("가계약")),c1130:find(x=>x.includes("11:30")),mapping:find(x=>x.includes("매핑")||x.includes("13:00"))};
+  if(col.code<0||col.name<0||col.branch<0)throw new Error("지점명·코드·매니저 열이 필요합니다.");
+  const out=[],ord={};
+  a.slice(hi+1).forEach(r=>{
+    const code=String(r[col.code]).trim();if(!code||!/\d/.test(code))return;
+    const d=col.day>=0?toDay(r[col.day]):null;
+    out.push({day:d,code,branch:String(r[col.branch]).trim(),name:String(r[col.name]).trim(),grade:col.grade>=0?String(r[col.grade]).trim():"",
+      prev_use:col.prev_use>=0?num(r[col.prev_use]):null,noon_use:col.noon_use>=0?num(r[col.noon_use]):null,prev_contract:col.prev_contract>=0?num(r[col.prev_contract]):null,c1130:col.c1130>=0?num(r[col.c1130]):null,mapping:col.mapping>=0?num(r[col.mapping]):null});
+  });
+  return {rows:out,hasDay:col.day>=0};
+}
+async function upload(file){
+  try{
+    toast("엑셀을 읽는 중…");
+    const wb=XLSX.read(await file.arrayBuffer(),{type:"array"});
+    const {rows:rs,hasDay}=parseGolden(wb);
+    if(!rs.length)throw new Error("올릴 자료가 없습니다.");
+    const target=day||today();
+    if(!hasDay||rs.some(r=>!r.day)){
+      if(!confirm(`엑셀에 「일자」 열이 없어서 지금 조회일 ${target} 자료로 올립니다.\n계속할까요?`))return;
+      rs.forEach(r=>{if(!r.day)r.day=target});
+    }
+    const byDay={};rs.forEach(r=>{(byDay[r.day]=byDay[r.day]||[]).push(r)});
+    const ds=Object.keys(byDay).sort();
+    if(!confirm(`${ds.length}일치 자료(${ds.join(", ")})를 올립니다.\n같은 날짜에 이미 올린 자료는 이 파일 내용으로 바꿉니다. (정보공유 체크와 비고는 유지됩니다)\n계속할까요?`))return;
+    toast("저장 중…");
+    for(const d of ds){
+      let r=await sb.from("golden_daily").delete().eq("day",d);if(r.error)throw r.error;
+      const list=byDay[d].map((x,i)=>({...x,day:d,ord:i}));
+      for(let i=0;i<list.length;i+=500){r=await sb.from("golden_daily").insert(list.slice(i,i+500));if(r.error)throw r.error}
+      r=await sb.from("golden_days").upsert({day:d,uploaded_by:me,uploaded_at:new Date().toISOString(),file_name:file.name,row_count:list.length});if(r.error)throw r.error;
+    }
+    day=ds[ds.length-1];toast("올렸습니다");await init();
+  }catch(e){alert("올리지 못했습니다.\n"+(e&&e.message?e.message:"잠시 후 다시 시도해 주세요."))}
+}
+$("#upBtn").onclick=()=>$("#xf").click();
+$("#xf").onchange=e=>{const fl=e.target.files[0];e.target.value="";if(fl)upload(fl)};
+
+(async()=>{
+  render();
+  if(!window.supabase){$("#notice").hidden=false;$("#notice").textContent="서버 연결 라이브러리를 불러오지 못했습니다.";return}
+  sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+  const {data}=await sb.auth.getSession();
+  if(!data.session){location.replace("index.html");return}
+  me=NAME_BY_EMAIL[data.session.user.email]||data.session.user.email;
+  await init();
+  let t;sb.channel("golden-live").on("postgres_changes",{event:"*",schema:"public",table:"golden_checks"},()=>{clearTimeout(t);t=setTimeout(async()=>{const ae=document.activeElement;if(ae&&ae.classList&&ae.classList.contains("nt"))return;await loadDay().catch(()=>{});render()},500)}).subscribe();
+})();
+</script>
+</body>
+</html>
