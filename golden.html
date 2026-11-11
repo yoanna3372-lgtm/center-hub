@@ -35,14 +35,16 @@ th{color:#fff;font-weight:700}
 .s-pink{background:#f7e1e3;color:#6a1a24}.s-green{background:#4d8b33}.s-light{background:#fdebd3;color:#6a3a00}.s-lav{background:#f1dcfb;color:#4a1a66}.s-gray{background:#e3e8ee;color:#334}
 td.l{text-align:center}
 tbody td:nth-child(n+5):nth-child(-n+10){font-weight:800;font-size:14px}
-tbody td:nth-child(11){width:64px;padding:2px 3px}td.good{background:var(--gd)}td.bad{background:var(--rd);color:#9a1b1b;font-weight:700}
+tbody td:nth-child(11){width:78px;padding:2px 3px}td.good{background:var(--gd)}td.bad{background:var(--rd);color:#9a1b1b;font-weight:700}
 td.grade-am{background:#fde3d2;color:#c8281e;font-weight:700}td.grade-gsm{background:#d9e8f6;color:#2b5d8a;font-weight:700}
 tr.sub td{background:#f1f0ee;font-weight:800;border-top:2px solid var(--maroon);border-bottom:5px solid #1b1b1b}
-.chk{border:1px solid #bbb;background:#fff;color:#666;border-radius:6px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer}
+.chk{border:1px solid #bbb;background:#fff;color:#666;border-radius:6px;padding:2px 6px;font:inherit;font-size:11px;cursor:pointer}
+tbody td:nth-child(7){width:62px;padding:3px 3px}
 .chk.on{background:#2f8f4e;border-color:#2f8f4e;color:#fff;font-weight:700}
 .nm{font-weight:700}.mu{color:var(--mu);font-size:12px}
-.nt{width:60px;font:inherit;font-size:12px;text-align:center;border:1px solid transparent;border-radius:4px;padding:3px 2px;background:transparent}
+.nt{width:72px;font:inherit;font-size:12px;text-align:center;border:1px solid transparent;border-radius:4px;padding:3px 2px;background:transparent}
 .nt:focus{width:140px;position:relative;z-index:2}
+.nt.has{background:#fff4b8;font-weight:700;border-color:#e3d77a}
 .nt:hover,.nt:focus{border-color:var(--ln);background:#fff}
 .empty{padding:40px;text-align:center;color:var(--mu)}
 #notice{background:#fbf0d8;color:#a8720a;padding:10px 14px;border-radius:8px}
@@ -52,7 +54,7 @@ tr.sub td{background:#f1f0ee;font-weight:800;border-top:2px solid var(--maroon);
 </head>
 <body>
 <header class="hd"><div><div class="sm">30% 성장을 위하여!</div><h1><b>충청GA본부</b> 본부골든룰</h1><div class="mu" style="color:#cfcfcf" id="meta"></div></div>
-<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="hbtn" href="index.html">← 센터장 업무허브</a><input type="file" id="xf" accept=".xlsx,.xls,.xlsm" hidden><select id="upType" class="hbtn" style="background:#222;color:#fff" title="올릴 자료 종류"><option value="prev_contract">전일 가계약</option><option value="c1130">당일 가계약(11:30)</option><option value="mapping">매핑지사실적(13:00)</option><option value="use">출근알리기(전일·12시 사용건수)</option><option value="all">전체(한 파일)</option></select><button class="hbtn p" id="upBtn" type="button">📥 엑셀 올리기</button></div></header>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="hbtn" href="index.html">← 센터장 업무허브</a><input type="file" id="xf" accept=".xlsx,.xls,.xlsm,.csv,.txt" hidden><select id="upType" class="hbtn" style="background:#222;color:#fff" title="올릴 자료 종류"><option value="prev_contract">전일 가계약</option><option value="c1130">당일 가계약(11:30)</option><option value="mapping">매핑지사실적(13:00)</option><option value="use">12시 사용건수(엠톡 파일)</option><option value="all">전체(한 파일)</option></select><button class="hbtn p" id="upBtn" type="button">📥 엑셀 올리기</button></div></header>
 <nav class="hubnav"><a href="index.html">🏠 홈</a><a href="index.html#mgr">🧑‍💼 신입지점장 OJT</a><a href="index.html#stf">🧑‍🎓 신입매니저 OJT</a><a href="index.html#mon">📅 월간활동일정</a><a href="coaching.html">📝 매니저코칭노트</a><a href="goal.html">🎯 매니저목표진척</a><a href="golden.html" class="on">🏅 본부골든룰</a></nav>
 <div class="wrap">
   <div id="notice" hidden></div>
@@ -64,6 +66,7 @@ tr.sub td{background:#f1f0ee;font-weight:800;border-top:2px solid var(--maroon);
   </div>
   <div class="bar" id="brs"></div>
   <div class="sheet" id="sheet"><div class="empty">불러오는 중…</div></div>
+  <datalist id="noteOpts"><option value="휴가"><option value="병가"><option value="연차"><option value="반차"><option value="교육"><option value="출장"><option value="경조사"><option value="결근"></datalist>
   <div class="mu">12시 사용건수가 전일 사용건수보다 적으면 빨강 · 매핑실적이 비었거나 음수이면 빨강 · 정보공유는 로그인한 센터장 누구나 버튼으로 체크하고, 다시 눌러 취소할 수 있습니다. 날짜별로 따로 기록됩니다.</div>
 </div>
 <script>
@@ -96,8 +99,8 @@ function render(){
   let h=`<div class="title"><i></i>충청GA본부 Golden rule</div><div class="date">${md(day)}</div>
 <table><thead>
 <tr><th rowspan="2" class="g-base">지점명</th><th rowspan="2" class="g-base">코드</th><th rowspan="2" class="g-base">매니저</th><th rowspan="2" class="g-base">직책</th>
-<th colspan="2" class="g-red">출근알리기<br>(M-TALK 활용)</th><th class="g-slate">정보공유 활성화</th><th colspan="2" class="g-amber">가계약<br>(15건 / 30건 / 45건 달성)</th><th class="g-purple">매핑실적</th><th rowspan="2" class="g-blue">비고</th></tr>
-<tr><th class="s-pink">전일<br>사용건수</th><th class="s-green">12시<br>사용건수</th><th class="s-gray">공유 체크</th><th class="s-light">전일<br>가계약</th><th class="s-light">11:30</th><th class="s-lav">13:00</th></tr>
+<th colspan="2" class="g-red">출근알리기<br>(M-TALK 활용)</th><th class="g-slate">정보<br>공유</th><th colspan="2" class="g-amber">가계약<br>(15건 / 30건 / 45건 달성)</th><th class="g-purple">매핑실적</th><th rowspan="2" class="g-blue">비고</th></tr>
+<tr><th class="s-pink">전일<br>사용건수</th><th class="s-green">12시<br>사용건수</th><th class="s-gray">체크</th><th class="s-light">전일<br>가계약</th><th class="s-light">11:30</th><th class="s-lav">13:00</th></tr>
 </thead><tbody>`;
   [...new Set(vis.map(r=>r.branch))].sort((a,b)=>bnum(a)-bnum(b)).forEach(b=>{
     const l=vis.filter(r=>r.branch===b);
@@ -108,7 +111,7 @@ function render(){
       <td class="${on?"good":""}"><button class="chk ${on?"on":""}" data-code="${esc(r.code)}" title="${on?esc((c.checked_by||"")+" 체크 · 다시 누르면 취소"):"눌러서 공유 체크"}">${on?"✔ 공유":"미확인"}</button></td>
       <td class="good">${f(r.prev_contract)}</td><td class="good">${f(r.c1130)}</td>
       <td class="${r.mapping==null||r.mapping<0?"bad":"good"}">${r.mapping==null?"":f(r.mapping)}</td>
-      <td><input class="nt" data-note="${esc(r.code)}" value="${esc(c.note||"")}" placeholder="비고"></td></tr>`;
+      <td><input class="nt ${c.note?"has":""}" list="noteOpts" data-note="${esc(r.code)}" value="${esc(c.note||"")}" placeholder="휴가·병가"></td></tr>`;
     });
     h+=`<tr class="sub"><td class="l">${bnum(b)}지점 합계</td><td></td><td></td><td></td><td>${f(sum(l,"prev_use"))}</td><td class="good">${f(sum(l,"noon_use"))}</td><td>${l.filter(r=>(checks.get(r.code)||{}).shared).length} / ${l.length}</td><td class="good">${f(sum(l,"prev_contract"))}</td><td class="good">${f(sum(l,"c1130"))}</td><td>${f(sum(l,"mapping"))}</td><td></td></tr>`;
   });
@@ -230,7 +233,7 @@ const TYPES={
   prev_contract:{label:"전일 가계약",cols:[{k:"prev_contract",pick:H=>{let i=H.findIndex(x=>x.includes("가계약")&&x.includes("건수"));return i>=0?i:H.findIndex(x=>x.includes("전일")&&x.includes("가계약"))}}]},
   c1130:{label:"당일 가계약(11:30)",cols:[{k:"c1130",pick:H=>{let i=H.findIndex(x=>x.includes("가계약")&&x.includes("건수"));return i>=0?i:H.findIndex(x=>x.includes("11:30"))}}]},
   mapping:{label:"매핑지사실적(13:00)",cols:[{k:"mapping",pick:H=>{let i=H.findIndex(x=>x.includes("매핑")&&x.endsWith("실적")&&!x.includes("인원"));return i>=0?i:H.findIndex(x=>x.includes("매핑")&&x.includes("실적")&&!x.includes("인원"))}}]},
-  use:{label:"출근알리기",cols:[{k:"prev_use",pick:H=>H.findIndex(x=>x.includes("전일")&&x.includes("사용"))},{k:"noon_use",pick:H=>H.findIndex(x=>x.includes("12시"))}]}
+  use:{label:"12시 사용건수",single:true,cols:[{k:"noon_use",pick:H=>{let i=H.findIndex(x=>x.includes("총횟수"));if(i<0)i=H.findIndex(x=>x.includes("12시")&&x.includes("사용"));return i>=0?i:H.findIndex(x=>x.includes("횟수")&&!x.includes("최대"))}}]}
 };
 let roster=null;
 async function getRoster(){
@@ -238,58 +241,110 @@ async function getRoster(){
   try{const {data}=await sb.from("coach_managers").select("code,name,branch,grade").range(0,999);(data||[]).forEach(r=>roster.set(r.code,r))}catch(e){}
   return roster;
 }
-function parsePartial(wb,type){
+/* 파일(.xlsx / .csv / .txt)을 줄×칸 배열로 읽기. CSV는 UTF-8이 아니면 한글 윈도우 인코딩(EUC-KR)으로 읽고, 탭·쉼표 구분을 자동 판별 */
+async function readRows(file){
+  const buf=await file.arrayBuffer();
+  if(/\.(csv|txt|tsv)$/i.test(file.name)){
+    let s;try{s=new TextDecoder("utf-8",{fatal:true}).decode(buf)}catch(e){s=new TextDecoder("euc-kr").decode(buf)}
+    const lines=s.replace(/^\uFEFF/,"").split(/\r?\n/).filter(x=>x.trim());
+    if(!lines.length)return [];
+    const sep=lines[0].split("\t").length>=lines[0].split(",").length?"\t":",";
+    return lines.map(l=>l.split(sep).map(x=>x.replace(/^"|"$/g,"").trim()));
+  }
+  const wb=XLSX.read(buf,{type:"array"});
+  return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:""});
+}
+function parsePartial(a,type){
   const T=TYPES[type];
-  const ws=wb.Sheets[wb.SheetNames[0]];
-  const a=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
-  let hi=a.findIndex(r=>r.some(c=>{const x=cl(c);return x==="코드"||x==="매니저코드"||x.includes("매니저코드")}));
-  if(hi<0)throw new Error("제목 줄에서 「코드」(또는 「매니저코드」) 열을 찾지 못했습니다.\n찾은 제목: "+(a[0]||[]).map(cl).filter(Boolean).join(", "));
+  let hi=a.findIndex(r=>r.some(c=>{const x=cl(c);return x==="코드"||x==="사번"||x.includes("매니저코드")}));
+  if(hi<0)throw new Error("제목 줄에서 「코드」(매니저코드 또는 사번) 열을 찾지 못했습니다.\n찾은 제목: "+(a[0]||[]).map(cl).filter(Boolean).join(", "));
   // 제목이 두 줄(위: 묶음 이름, 아래: 세부 이름)인 자료도 읽기: 두 줄을 이어 붙여 하나의 제목으로 사용
   const r1=a[hi].map(cl),r2=(a[hi+1]||[]).map(cl);
   const two=r2.length&&r2.some(x=>x==="건수"||x==="실적"||x==="인원"||x.includes("보험료")||x.includes("환산"))&&!/^\d{5,}$/.test(r2[r1.findIndex(x=>x.includes("매니저코드"))]||"");
   const H=r1.map((x,j)=>{const y=two?(r2[j]||""):"";return x===y?x:x+y});
   if(two)hi=hi+1;
-  const ci=H.findIndex(x=>x.includes("매니저코드"))>=0?H.findIndex(x=>x.includes("매니저코드")):H.findIndex(x=>x==="코드");
-  const ni=H.findIndex(x=>x==="매니저"||x.includes("매니저명")),bi=H.findIndex(x=>x.includes("지점")),gi=H.findIndex(x=>x.includes("직책")),di=H.findIndex(x=>x==="일자"||x==="날짜"||x==="조회일");
-  const cols=T.cols.map(c=>{let i=c.pick(H);if(i<0&&T.cols.length===1){ // 못 찾으면 이름에 핵심 단어가 들어간 열을 한 번 더 찾기
+  let ci=H.findIndex(x=>x.includes("매니저코드"));if(ci<0)ci=H.findIndex(x=>x==="사번");if(ci<0)ci=H.findIndex(x=>x==="코드");
+  const ni=H.findIndex(x=>x==="매니저"||x.includes("매니저명")||x==="이름"),bi=H.findIndex(x=>x.includes("지점")||x==="조직"),gi=H.findIndex(x=>x.includes("직책")),di=H.findIndex(x=>x==="일자"||x==="날짜"||x==="조회일");
+  const cols=T.cols.map(c=>{let i=c.pick(H);if(i<0&&T.cols.length===1){
       const key=type==="prev_contract"||type==="c1130"?"가계약":type==="mapping"?"실적":"";i=key?H.findIndex((x,j)=>j!==ci&&x.includes(key)):-1}
     if(i<0)throw new Error(`「${T.label}」 값이 들어 있는 열을 찾지 못했습니다.\n찾은 제목: ${H.filter(Boolean).join(", ")}`);return {k:c.k,i,name:H[i]}});
-  const by=new Map();let days=new Set();
-  a.slice(hi+1).forEach(r=>{
-    const code=String(r[ci]).trim();if(!code||!/\d/.test(code))return;
-    const dd=di>=0?toDay(r[di]):null;if(dd)days.add(dd);
-    {const gr=gi>=0?String(r[gi]):"",br=bi>=0?String(r[bi]):"";if(gr.includes("센터장")||(br&&!/\d/.test(br)))return}   // 센터장·본부 합계 줄은 제외
-    const key=code;let o=by.get(key);if(!o){o={code,name:ni>=0?String(r[ni]).trim():"",branch:bi>=0?String(r[bi]).trim():"",grade:gi>=0?String(r[gi]).trim():"",day:dd,v:{}};by.set(key,o)}
-    cols.forEach(c=>{const n=num(r[c.i]);if(n!=null)o.v[c.k]=(o.v[c.k]||0)+n});   // 같은 코드가 여러 줄이면 합산(건별 자료 대응)
+  const rowsOk=a.slice(hi+1).filter(r=>{
+    const code=String(r[ci]).trim();if(!code||!/\d/.test(code))return false;
+    const gr=gi>=0?String(r[gi]):"",br=bi>=0?String(r[bi]).trim():"";
+    if(gr.includes("센터장"))return false;                       // 센터장 줄 제외
+    if(br&&!/\d/.test(br))return false;                           // 본부 합계 줄 제외
+    return true;
   });
-  return {list:[...by.values()],cols,days:[...days]};
+  // 여러 본부가 섞인 파일(예: 엠톡)은 충청GA 자료만 사용
+  const hasCC=bi>=0&&rowsOk.some(r=>String(r[bi]).includes("충청"));
+  const rows=hasCC?rowsOk.filter(r=>String(r[bi]).includes("충청")):rowsOk;
+  const by=new Map(),days=new Set();let dupSame=0,dupDiff=0,other=rowsOk.length-rows.length;
+  rows.forEach(r=>{
+    const code=String(r[ci]).trim(),dd=di>=0?toDay(r[di]):null;if(dd)days.add(dd);
+    let o=by.get(code);
+    if(!o){o={code,name:ni>=0?String(r[ni]).trim():"",branch:bi>=0?String(r[bi]).trim():"",grade:gi>=0?String(r[gi]).trim():"",day:dd,v:{}};by.set(code,o)}
+    cols.forEach(c=>{
+      const n=num(r[c.i]);if(n==null)return;
+      if(T.single){   // 사용건수처럼 한 사람에 값 하나인 자료: 같은 줄이 겹쳐 있으면 합치지 않고 하나만 사용
+        if(o.v[c.k]==null)o.v[c.k]=n;else if(o.v[c.k]===n)dupSame++;else{dupDiff++;o.v[c.k]=Math.max(o.v[c.k],n)}
+      }else o.v[c.k]=(o.v[c.k]||0)+n;   // 건별 자료는 같은 코드를 합산
+    });
+  });
+  return {list:[...by.values()],cols,days:[...days],dupSame,dupDiff,other};
 }
 async function uploadPartial(file,type){
   try{
-    toast("엑셀을 읽는 중…");
-    const wb=XLSX.read(await file.arrayBuffer(),{type:"array"});
-    const {list,cols,days:ds}=parsePartial(wb,type);
+    toast("파일을 읽는 중…");
+    const a=await readRows(file);
+    const {list,cols,days:ds,dupSame,dupDiff,other}=parsePartial(a,type);
     if(!list.length)throw new Error("올릴 자료가 없습니다.");
     const target=ds.length===1?ds[0]:(ds.length>1?null:(day||today()));
-    if(target===null)throw new Error("한 파일에 여러 날짜가 섞여 있습니다. 날짜별로 나눠서 올려 주세요.");
-    if(!confirm(`${TYPES[type].label} — ${target} 자료로 올립니다.\n읽은 열: ${cols.map(c=>"「"+c.name+"」").join(", ")}\n매니저(코드) ${list.length}명\n같은 코드가 여러 줄이면 합산합니다. 다른 칸(다른 종류 자료)은 그대로 유지됩니다.\n계속할까요?`))return;
-    toast("저장 중…");
-    const ro=await getRoster();
+    if(target===null)throw new Error("한 파일에 여러 날짜가 섞여 있습니다. 날짜별로 나눠서 올려 주세요.\n파일에 있는 날짜: "+ds.join(", "));
     const {data:ex,error:e0}=await sb.from("golden_daily").select("*").eq("day",target).range(0,2999);if(e0)throw e0;
     const have=new Map(ex.map(r=>[r.code,r]));
-    let ord=ex.reduce((m,r)=>Math.max(m,r.ord||0),0);
-    const out=list.map(o=>{
-      let b=have.get(o.code);
-      if(!b){const r=ro.get(o.code)||{};ord++;b={day:target,code:o.code,ord,branch:o.branch||r.branch||"",name:o.name||r.name||"",grade:o.grade||r.grade||"",prev_use:null,noon_use:null,prev_contract:null,c1130:null,mapping:null}}
-      return {...b,...o.v};
+    // 전일 사용건수는 바로 이전 날짜 자료의 12시 사용건수에서 자동 반영
+    let prevDay=null,prevMap=new Map();
+    if(type==="use"){
+      const pd=days.filter(d=>d.day<target).sort((x,y)=>y.day.localeCompare(x.day))[0];
+      if(pd){prevDay=pd.day;const {data:pr,error:ep}=await sb.from("golden_daily").select("code,noon_use").eq("day",prevDay).range(0,2999);if(ep)throw ep;pr.forEach(r=>{if(r.noon_use!=null)prevMap.set(r.code,r.noon_use)})}
+    }
+    // 올리기 전 점검: 이전 값과 새 값의 합계·인원을 비교해서 보여줌
+    const lines=cols.map(c=>{
+      const oldV=ex.filter(r=>r[c.k]!=null),oldSum=oldV.reduce((s,r)=>s+Number(r[c.k]),0);
+      const newV=list.filter(o=>o.v[c.k]!=null),newSum=newV.reduce((s,o)=>s+o.v[c.k],0);
+      return `· ${TYPES[type].label}: 새 합계 ${f(newSum)} (${newV.length}명)`+(oldV.length?` ← 기존 합계 ${f(oldSum)} (${oldV.length}명)`:" ← 기존 자료 없음")+(list.length-newV.length?`\n  ⚠ 값이 비어 있는 매니저 ${list.length-newV.length}명`:"");
     });
+    if(type==="use")lines.push(prevDay?`· 전일 사용건수: ${prevDay} 자료의 12시 사용건수로 자동 반영 (${prevMap.size}명)`:`· 전일 사용건수: 이전 날짜 자료가 없어 비워 둡니다 (전날 자료를 먼저 올리면 자동으로 채워집니다)`);
+    const notIn=ex.filter(r=>!list.some(o=>o.code===r.code)).length;
+    if(type==="use")await getRoster();
+    const zeroN=type==="use"?(()=>{const s=new Set(list.map(o=>o.code));let n=0;const seen=new Set();ex.forEach(r=>{if(!s.has(r.code)){n++;seen.add(r.code)}});(roster||new Map()).forEach((r,c)=>{if(!s.has(c)&&!seen.has(c)&&String(r.branch||"").includes("충청")&&/\d/.test(r.branch||""))n++});return n})():0;
+    const warn=[];
+    if(other)warn.push(`충청GA가 아닌 줄 ${other}개는 제외했습니다.`);
+    if(dupSame)warn.push(`똑같은 줄이 겹쳐 있어 ${dupSame}건은 한 번만 반영합니다.`);
+    if(dupDiff)warn.push(`⚠ 같은 사번에 값이 다른 줄이 ${dupDiff}건 있어 큰 값을 사용합니다. 파일을 확인해 주세요.`);
+    if(!confirm(`${TYPES[type].label} — ${target} 자료로 올립니다.\n읽은 열: ${cols.map(c=>"「"+c.name+"」").join(", ")}\n매니저(코드) ${list.length}명 (센터장 줄 제외)\n\n${lines.join("\n")}\n${warn.length?"\n"+warn.join("\n")+"\n":""}${type==="use"?(zeroN?`\n※ 파일에 없는 매니저 ${zeroN}명은 12시 사용건수를 0으로 맞춥니다.\n`:""):(notIn?`\n※ 이 날짜에 있던 매니저 중 ${notIn}명은 이번 파일에 없어서 그대로 둡니다.\n`:"")}\n다른 종류의 칸은 그대로 유지됩니다.\n계속할까요?`))return;
+    toast("저장 중…");
+    const ro=await getRoster();
+    let ord=ex.reduce((m,r)=>Math.max(m,r.ord||0),0);
+    const merged=new Map(ex.map(r=>[r.code,{...r}]));
+    list.forEach(o=>{
+      let b=merged.get(o.code);
+      if(!b){const r=ro.get(o.code)||{};ord++;b={day:target,code:o.code,ord,branch:o.branch||r.branch||"",name:o.name||r.name||"",grade:o.grade||r.grade||"",prev_use:null,noon_use:null,prev_contract:null,c1130:null,mapping:null}}
+      merged.set(o.code,{...b,...o.v});
+    });
+    if(type==="use"){
+      // 파일에 없는 매니저(현재 명단 기준)는 사용 0건으로 맞춤
+      ro.forEach((r,code)=>{if(!merged.has(code)&&/\d/.test(r.branch||"")&&String(r.branch).includes("충청")){ord++;merged.set(code,{day:target,code,ord,branch:r.branch||"",name:r.name||"",grade:r.grade||"",prev_use:null,noon_use:0,prev_contract:null,c1130:null,mapping:null})}});
+      const inFile=new Set(list.map(o=>o.code));
+      merged.forEach((b,code)=>{if(!inFile.has(code))b.noon_use=0});
+      merged.forEach((b,code)=>{if(prevMap.has(code))b.prev_use=prevMap.get(code)});
+    }
+    const out=[...merged.values()];
     for(let i=0;i<out.length;i+=500){const r=await sb.from("golden_daily").upsert(out.slice(i,i+500));if(r.error)throw r.error}
-    const total=new Set([...have.keys(),...out.map(x=>x.code)]).size;
-    const r2=await sb.from("golden_days").upsert({day:target,uploaded_by:me,uploaded_at:new Date().toISOString(),file_name:file.name,row_count:total});if(r2.error)throw r2.error;
+    const r2=await sb.from("golden_days").upsert({day:target,uploaded_by:me,uploaded_at:new Date().toISOString(),file_name:file.name,row_count:out.length});if(r2.error)throw r2.error;
     day=target;toast(`${TYPES[type].label} ${list.length}명을 올렸습니다`);await init();
   }catch(e){alert("올리지 못했습니다.\n"+(e&&e.message?e.message:"잠시 후 다시 시도해 주세요."))}
-}
-$("#upBtn").onclick=()=>$("#xf").click();
+}$("#upBtn").onclick=()=>$("#xf").click();
 $("#xf").onchange=e=>{const fl=e.target.files[0];e.target.value="";if(!fl)return;const ty=$("#upType").value;ty==="all"?upload(fl):uploadPartial(fl,ty)};
 
 (async()=>{
