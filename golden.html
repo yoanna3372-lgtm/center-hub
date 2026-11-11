@@ -49,7 +49,7 @@ tr.sub td{background:#f1f0ee;font-weight:800;border-top:2px solid var(--maroon);
 </head>
 <body>
 <header class="hd"><div><div class="sm">30% 성장을 위하여!</div><h1><b>충청GA본부</b> 본부골든룰</h1><div class="mu" style="color:#cfcfcf" id="meta"></div></div>
-<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="hbtn" href="index.html">← 센터장 업무허브</a><input type="file" id="xf" accept=".xlsx,.xls,.xlsm" hidden><button class="hbtn p" id="upBtn" type="button">📥 엑셀 올리기</button></div></header>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="hbtn" href="index.html">← 센터장 업무허브</a><input type="file" id="xf" accept=".xlsx,.xls,.xlsm" hidden><select id="upType" class="hbtn" style="background:#222;color:#fff" title="올릴 자료 종류"><option value="prev_contract">전일 가계약</option><option value="c1130">당일 가계약(11:30)</option><option value="mapping">매핑지사실적(13:00)</option><option value="use">출근알리기(전일·12시 사용건수)</option><option value="all">전체(한 파일)</option></select><button class="hbtn p" id="upBtn" type="button">📥 엑셀 올리기</button></div></header>
 <nav class="hubnav"><a href="index.html">🏠 홈</a><a href="index.html#mgr">🧑‍💼 신입지점장 OJT</a><a href="index.html#stf">🧑‍🎓 신입매니저 OJT</a><a href="index.html#mon">📅 월간활동일정</a><a href="coaching.html">📝 매니저코칭노트</a><a href="goal.html">🎯 매니저목표진척</a><a href="golden.html" class="on">🏅 본부골든룰</a></nav>
 <div class="wrap">
   <div id="notice" hidden></div>
@@ -191,6 +191,7 @@ function parseGolden(wb){
   const out=[],ord={};
   a.slice(hi+1).forEach(r=>{
     const code=String(r[col.code]).trim();if(!code||!/\d/.test(code))return;
+    if((col.grade>=0&&String(r[col.grade]).includes("센터장"))||!/\d/.test(String(r[col.branch])))return;   // 센터장·본부 줄은 제외
     const d=col.day>=0?toDay(r[col.day]):null;
     out.push({day:d,code,branch:String(r[col.branch]).trim(),name:String(r[col.name]).trim(),grade:col.grade>=0?String(r[col.grade]).trim():"",
       prev_use:col.prev_use>=0?num(r[col.prev_use]):null,noon_use:col.noon_use>=0?num(r[col.noon_use]):null,prev_contract:col.prev_contract>=0?num(r[col.prev_contract]):null,c1130:col.c1130>=0?num(r[col.c1130]):null,mapping:col.mapping>=0?num(r[col.mapping]):null});
@@ -221,8 +222,72 @@ async function upload(file){
     day=ds[ds.length-1];toast("올렸습니다");await init();
   }catch(e){alert("올리지 못했습니다.\n"+(e&&e.message?e.message:"잠시 후 다시 시도해 주세요."))}
 }
+/* ---- 자료 종류별로 따로 올리기 (코드 기준으로 해당 칸만 갱신) ---- */
+const TYPES={
+  prev_contract:{label:"전일 가계약",cols:[{k:"prev_contract",pick:H=>{let i=H.findIndex(x=>x.includes("가계약")&&x.includes("건수"));return i>=0?i:H.findIndex(x=>x.includes("전일")&&x.includes("가계약"))}}]},
+  c1130:{label:"당일 가계약(11:30)",cols:[{k:"c1130",pick:H=>{let i=H.findIndex(x=>x.includes("가계약")&&x.includes("건수"));return i>=0?i:H.findIndex(x=>x.includes("11:30"))}}]},
+  mapping:{label:"매핑지사실적(13:00)",cols:[{k:"mapping",pick:H=>{let i=H.findIndex(x=>x.includes("매핑")&&x.endsWith("실적")&&!x.includes("인원"));return i>=0?i:H.findIndex(x=>x.includes("매핑")&&x.includes("실적")&&!x.includes("인원"))}}]},
+  use:{label:"출근알리기",cols:[{k:"prev_use",pick:H=>H.findIndex(x=>x.includes("전일")&&x.includes("사용"))},{k:"noon_use",pick:H=>H.findIndex(x=>x.includes("12시"))}]}
+};
+let roster=null;
+async function getRoster(){
+  if(roster)return roster;roster=new Map();
+  try{const {data}=await sb.from("coach_managers").select("code,name,branch,grade").range(0,999);(data||[]).forEach(r=>roster.set(r.code,r))}catch(e){}
+  return roster;
+}
+function parsePartial(wb,type){
+  const T=TYPES[type];
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const a=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
+  let hi=a.findIndex(r=>r.some(c=>{const x=cl(c);return x==="코드"||x==="매니저코드"||x.includes("매니저코드")}));
+  if(hi<0)throw new Error("제목 줄에서 「코드」(또는 「매니저코드」) 열을 찾지 못했습니다.\n찾은 제목: "+(a[0]||[]).map(cl).filter(Boolean).join(", "));
+  // 제목이 두 줄(위: 묶음 이름, 아래: 세부 이름)인 자료도 읽기: 두 줄을 이어 붙여 하나의 제목으로 사용
+  const r1=a[hi].map(cl),r2=(a[hi+1]||[]).map(cl);
+  const two=r2.length&&r2.some(x=>x==="건수"||x==="실적"||x==="인원"||x.includes("보험료")||x.includes("환산"))&&!/^\d{5,}$/.test(r2[r1.findIndex(x=>x.includes("매니저코드"))]||"");
+  const H=r1.map((x,j)=>{const y=two?(r2[j]||""):"";return x===y?x:x+y});
+  if(two)hi=hi+1;
+  const ci=H.findIndex(x=>x.includes("매니저코드"))>=0?H.findIndex(x=>x.includes("매니저코드")):H.findIndex(x=>x==="코드");
+  const ni=H.findIndex(x=>x==="매니저"||x.includes("매니저명")),bi=H.findIndex(x=>x.includes("지점")),gi=H.findIndex(x=>x.includes("직책")),di=H.findIndex(x=>x==="일자"||x==="날짜"||x==="조회일");
+  const cols=T.cols.map(c=>{let i=c.pick(H);if(i<0&&T.cols.length===1){ // 못 찾으면 이름에 핵심 단어가 들어간 열을 한 번 더 찾기
+      const key=type==="prev_contract"||type==="c1130"?"가계약":type==="mapping"?"실적":"";i=key?H.findIndex((x,j)=>j!==ci&&x.includes(key)):-1}
+    if(i<0)throw new Error(`「${T.label}」 값이 들어 있는 열을 찾지 못했습니다.\n찾은 제목: ${H.filter(Boolean).join(", ")}`);return {k:c.k,i,name:H[i]}});
+  const by=new Map();let days=new Set();
+  a.slice(hi+1).forEach(r=>{
+    const code=String(r[ci]).trim();if(!code||!/\d/.test(code))return;
+    const dd=di>=0?toDay(r[di]):null;if(dd)days.add(dd);
+    {const gr=gi>=0?String(r[gi]):"",br=bi>=0?String(r[bi]):"";if(gr.includes("센터장")||(br&&!/\d/.test(br)))return}   // 센터장·본부 합계 줄은 제외
+    const key=code;let o=by.get(key);if(!o){o={code,name:ni>=0?String(r[ni]).trim():"",branch:bi>=0?String(r[bi]).trim():"",grade:gi>=0?String(r[gi]).trim():"",day:dd,v:{}};by.set(key,o)}
+    cols.forEach(c=>{const n=num(r[c.i]);if(n!=null)o.v[c.k]=(o.v[c.k]||0)+n});   // 같은 코드가 여러 줄이면 합산(건별 자료 대응)
+  });
+  return {list:[...by.values()],cols,days:[...days]};
+}
+async function uploadPartial(file,type){
+  try{
+    toast("엑셀을 읽는 중…");
+    const wb=XLSX.read(await file.arrayBuffer(),{type:"array"});
+    const {list,cols,days:ds}=parsePartial(wb,type);
+    if(!list.length)throw new Error("올릴 자료가 없습니다.");
+    const target=ds.length===1?ds[0]:(ds.length>1?null:(day||today()));
+    if(target===null)throw new Error("한 파일에 여러 날짜가 섞여 있습니다. 날짜별로 나눠서 올려 주세요.");
+    if(!confirm(`${TYPES[type].label} — ${target} 자료로 올립니다.\n읽은 열: ${cols.map(c=>"「"+c.name+"」").join(", ")}\n매니저(코드) ${list.length}명\n같은 코드가 여러 줄이면 합산합니다. 다른 칸(다른 종류 자료)은 그대로 유지됩니다.\n계속할까요?`))return;
+    toast("저장 중…");
+    const ro=await getRoster();
+    const {data:ex,error:e0}=await sb.from("golden_daily").select("*").eq("day",target).range(0,2999);if(e0)throw e0;
+    const have=new Map(ex.map(r=>[r.code,r]));
+    let ord=ex.reduce((m,r)=>Math.max(m,r.ord||0),0);
+    const out=list.map(o=>{
+      let b=have.get(o.code);
+      if(!b){const r=ro.get(o.code)||{};ord++;b={day:target,code:o.code,ord,branch:o.branch||r.branch||"",name:o.name||r.name||"",grade:o.grade||r.grade||"",prev_use:null,noon_use:null,prev_contract:null,c1130:null,mapping:null}}
+      return {...b,...o.v};
+    });
+    for(let i=0;i<out.length;i+=500){const r=await sb.from("golden_daily").upsert(out.slice(i,i+500));if(r.error)throw r.error}
+    const total=new Set([...have.keys(),...out.map(x=>x.code)]).size;
+    const r2=await sb.from("golden_days").upsert({day:target,uploaded_by:me,uploaded_at:new Date().toISOString(),file_name:file.name,row_count:total});if(r2.error)throw r2.error;
+    day=target;toast(`${TYPES[type].label} ${list.length}명을 올렸습니다`);await init();
+  }catch(e){alert("올리지 못했습니다.\n"+(e&&e.message?e.message:"잠시 후 다시 시도해 주세요."))}
+}
 $("#upBtn").onclick=()=>$("#xf").click();
-$("#xf").onchange=e=>{const fl=e.target.files[0];e.target.value="";if(fl)upload(fl)};
+$("#xf").onchange=e=>{const fl=e.target.files[0];e.target.value="";if(!fl)return;const ty=$("#upType").value;ty==="all"?upload(fl):uploadPartial(fl,ty)};
 
 (async()=>{
   render();
