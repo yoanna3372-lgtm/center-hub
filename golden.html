@@ -35,15 +35,16 @@ th{color:#fff;font-weight:700}
 .s-pink{background:#f7e1e3;color:#6a1a24}.s-green{background:#4d8b33}.s-light{background:#fdebd3;color:#6a3a00}.s-lav{background:#f1dcfb;color:#4a1a66}.s-gray{background:#e3e8ee;color:#334}
 td.l{text-align:center}
 tbody td:nth-child(n+5):nth-child(-n+10){font-weight:800;font-size:14px}
-tbody td:nth-child(11){width:78px;padding:2px 3px}td.good{background:var(--gd)}td.bad{background:var(--rd);color:#9a1b1b;font-weight:700}
+tbody td:nth-child(11){width:72px;padding:2px 3px}td.good{background:var(--gd)}td.bad{background:var(--rd);color:#9a1b1b;font-weight:700}
 td.grade-am{background:#fde3d2;color:#c8281e;font-weight:700}td.grade-gsm{background:#d9e8f6;color:#2b5d8a;font-weight:700}
 tr.sub td{background:#f1f0ee;font-weight:800;border-top:2px solid var(--maroon);border-bottom:5px solid #1b1b1b}
 .chk{border:1px solid #bbb;background:#fff;color:#666;border-radius:6px;padding:2px 6px;font:inherit;font-size:11px;cursor:pointer}
 tbody td:nth-child(7){width:62px;padding:3px 3px}
 .chk.on{background:#2f8f4e;border-color:#2f8f4e;color:#fff;font-weight:700}
 .nm{font-weight:700}.mu{color:var(--mu);font-size:12px}
-.nt{width:72px;font:inherit;font-size:12px;text-align:center;border:1px solid transparent;border-radius:4px;padding:3px 2px;background:transparent}
-.nt:focus{width:140px;position:relative;z-index:2}
+.nt{width:64px;font:inherit;font-size:12px;text-align:center;border:1px solid transparent;border-radius:4px;padding:3px 2px;background:transparent}
+.nt:focus{position:relative;z-index:2}
+select.nt{appearance:none;-webkit-appearance:none;cursor:pointer;width:64px}
 .nt.has{background:#fff4b8;font-weight:700;border-color:#e3d77a}
 .nt:hover,.nt:focus{border-color:var(--ln);background:#fff}
 .empty{padding:40px;text-align:center;color:var(--mu)}
@@ -66,7 +67,7 @@ tbody td:nth-child(7){width:62px;padding:3px 3px}
   </div>
   <div class="bar" id="brs"></div>
   <div class="sheet" id="sheet"><div class="empty">불러오는 중…</div></div>
-  <datalist id="noteOpts"><option value="휴가"><option value="병가"><option value="연차"><option value="반차"><option value="교육"><option value="출장"><option value="경조사"><option value="결근"></datalist>
+  
   <div class="mu">12시 사용건수가 전일 사용건수보다 적으면 빨강 · 매핑실적이 비었거나 음수이면 빨강 · 정보공유는 로그인한 센터장 누구나 버튼으로 체크하고, 다시 눌러 취소할 수 있습니다. 날짜별로 따로 기록됩니다.</div>
 </div>
 <script>
@@ -79,6 +80,7 @@ const f=n=>n==null||n===""?"":Number(n).toLocaleString("ko-KR");
 const bnum=b=>parseInt((b||"").replace(/\D/g,""))||0;
 const pad=n=>String(n).padStart(2,"0");
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
+const NOTE_OPTS=["휴가","월차","반차","병가"];
 let sb,me="",day="",days=[],rows=[],checks=new Map(),sel=new Set(),loaded=false;
 function toast(t){const e=document.createElement("div");e.className="toast";e.textContent=t;document.body.append(e);setTimeout(()=>e.remove(),2600)}
 const md=s=>s?`${+s.slice(5,7)}월 ${+s.slice(8,10)}일`:"";
@@ -111,7 +113,7 @@ function render(){
       <td class="${on?"good":""}"><button class="chk ${on?"on":""}" data-code="${esc(r.code)}" title="${on?esc((c.checked_by||"")+" 체크 · 다시 누르면 취소"):"눌러서 공유 체크"}">${on?"✔ 공유":"미확인"}</button></td>
       <td class="good">${f(r.prev_contract)}</td><td class="good">${f(r.c1130)}</td>
       <td class="${r.mapping==null||r.mapping<0?"bad":"good"}">${r.mapping==null?"":f(r.mapping)}</td>
-      <td><input class="nt ${c.note?"has":""}" list="noteOpts" data-note="${esc(r.code)}" value="${esc(c.note||"")}" placeholder="휴가·병가"></td></tr>`;
+      <td><select class="nt ${c.note?"has":""}" data-note="${esc(r.code)}"><option value=""></option>${NOTE_OPTS.concat(c.note&&!NOTE_OPTS.includes(c.note)?[c.note]:[]).map(o=>`<option ${o===c.note?"selected":""}>${esc(o)}</option>`).join("")}</select></td></tr>`;
     });
     h+=`<tr class="sub"><td class="l">${bnum(b)}지점 합계</td><td></td><td></td><td></td><td>${f(sum(l,"prev_use"))}</td><td class="good">${f(sum(l,"noon_use"))}</td><td>${l.filter(r=>(checks.get(r.code)||{}).shared).length} / ${l.length}</td><td class="good">${f(sum(l,"prev_contract"))}</td><td class="good">${f(sum(l,"c1130"))}</td><td>${f(sum(l,"mapping"))}</td><td></td></tr>`;
   });
