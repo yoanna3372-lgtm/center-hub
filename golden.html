@@ -174,7 +174,7 @@ async function exportImg(mode){
   const el=$("#sheet");if(!window.html2canvas){toast("이미지 도구를 불러오지 못했습니다.");return}
   toast("이미지 만드는 중…");
   try{
-    const w=Math.ceil(el.scrollWidth),cv=await html2canvas(el,{scale:2,backgroundColor:"#ffffff",width:w,windowWidth:Math.max(w+60,1200)});
+    const w=Math.ceil(el.scrollWidth),h=Math.ceil(el.scrollHeight),cv=await html2canvas(el,{scale:2,backgroundColor:"#ffffff",useCORS:true,width:w,height:h,windowWidth:Math.max(w+80,1200),windowHeight:Math.max(document.documentElement.scrollHeight,h)+80,onclone:(doc,c)=>{c.style.overflow="visible";c.style.width=w+"px";c.style.maxWidth="none";c.querySelectorAll(".sheet").forEach(x=>{x.style.overflow="visible"})}});
     const blob=await new Promise(r=>cv.toBlob(r,"image/png"));
     if(mode==="save"){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`본부골든룰_${day}${sel.size?"_"+[...sel].map(bnum).sort((x,y)=>x-y).join("-")+"지점":""}.png`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast("이미지를 저장했습니다")}
     else{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);toast("이미지를 복사했습니다. 붙여넣기(Ctrl+V) 하세요")}
