@@ -204,7 +204,7 @@ function buildPeople(rows){
     p.main=t.has("20만 이상")?"20만 이상":t.has("10만 이상")?"10만 이상":null;   // 20만 목표는 10만 목표를 포함 → 최대 구간만
     p.care=t.has("케어메이트");
     p.eff=DEDUPE?[p.main||(p.care?"케어메이트":null)].filter(Boolean):[...(p.care?["케어메이트"]:[]),...(p.main?[p.main]:[])];
-    const pf=perf.get(p.code)||{};p.perf=pf.perf||0;p.cnt=pf.cnt||0;
+    const pf=perf.get(p.code)||{};p.perf=pf.perf||0;p.cnt=pf.cnt||0;p.w=pf.w||[0,0,0,0,0];
     p.quit=/해촉/.test(p.note);
     p.hit={};p.eff.forEach(x=>p.hit[x]=p.perf>=TH[x]);
     p.center=cmap.get(bnum(p.branch)+"|"+p.mgr)||byName(p.mgr)||"미지정";
@@ -276,10 +276,11 @@ function renderP(all,brs){
   const fo=sc.filter(p=>!p.allHit&&p.perf>0).sort((a,b)=>a.remain-b.remain).slice(0,5);
   $("#focus").innerHTML=`<h2>오늘 챙길 ${fo.length}명<small>달성까지 적게 남은 순 · 실적이 있는 미달 사용인</small></h2>`+(fo.length?`<div class="fgrid">${fo.map((p,i)=>`<div class="fc" data-p="${esc(p.code)}"><span class="rk">${i+1}</span><b>${esc(p.name)}</b><div class="ag">${esc(p.agency)}</div><div class="nx"><em>${man(p.remain)}</em> 더 → ${p.next}</div><div class="mu">${esc(p.mgr)} · 현재 ${man(p.perf)}</div></div>`).join("")}</div>`:`<div class="mu">대상이 없습니다.</div>`);
   $("#cnt").textContent=`${list.length}명`;
-  $("#plist").innerHTML=`<div style="padding:12px 16px;border-bottom:1px solid var(--ln)"><b style="font-size:17px">${esc(selM==="전체"?"사용인 목록":selM+" 매니저 사용인 목록")}</b> <span class="mu">${[center!=="전체"?center+" 센터장":"",branch!=="전체"?bshort(branch):"",FIL.find(x=>x[0]===fil)[1]].filter(Boolean).join(" · ")} · ${list.length}명</span></div>`+(list.length?`<table><thead><tr><th>매니저</th><th>대리점(지사)</th><th>사용인</th><th>목표 구간</th><th class="n">실적계</th><th class="n">남은 금액</th><th>달성</th></tr></thead><tbody>${list.slice(0,400).map(p=>`<tr class="pr ${selCode===p.code?"sel":""}" data-p="${esc(p.code)}"><td>${esc(p.mgr)}</td><td>${esc(p.agency)}</td><td><b>${esc(p.name)}</b></td><td>${p.eff.map(e=>`<span class="tag ${e==="20만 이상"?"t20":""}">${e}</span>`).join("")}</td><td class="n">${p.perf?won(p.perf)+"원":"0원"}</td><td class="n">${p.allHit?"-":man(p.remain)}</td><td>${p.eff.map(e=>p.hit[e]?`<span class="tag ok2">${e} ✓</span>`:"").join("")||`<span class="tag no">미달</span>`}</td></tr>`).join("")}</tbody></table>${list.length>400?`<div class="empty">상위 400명만 표시했습니다. 조건을 좁혀 주세요.</div>`:""}`:`<div class="empty">조건에 맞는 사용인이 없습니다.</div>`);
+  const wk=[0,1,2,3,4].filter(i=>all.some(p=>p.w[i]>0));   // 실적이 있는 주차만 열로 표시
+  $("#plist").innerHTML=`<div style="padding:12px 16px;border-bottom:1px solid var(--ln)"><b style="font-size:17px">${esc(selM==="전체"?"사용인 목록":selM+" 매니저 사용인 목록")}</b> <span class="mu">${[center!=="전체"?center+" 센터장":"",branch!=="전체"?bshort(branch):"",FIL.find(x=>x[0]===fil)[1]].filter(Boolean).join(" · ")} · ${list.length}명</span></div>`+(list.length?`<table><thead><tr><th>매니저</th><th>대리점(지사)</th><th>사용인</th><th>목표 구간</th>${wk.map(i=>`<th class="n">${i+1}주차</th>`).join("")}<th class="n">실적 합계</th><th class="n">남은 금액</th><th>달성</th></tr></thead><tbody>${list.slice(0,400).map(p=>`<tr class="pr ${selCode===p.code?"sel":""}" data-p="${esc(p.code)}"><td>${esc(p.mgr)}</td><td>${esc(p.agency)}</td><td><b>${esc(p.name)}</b></td><td>${p.eff.map(e=>`<span class="tag ${e==="20만 이상"?"t20":""}">${e}</span>`).join("")}</td>${wk.map(i=>`<td class="n">${won(p.w[i])}</td>`).join("")}<td class="n"><b>${p.perf?won(p.perf)+"원":"0원"}</b></td><td class="n">${p.allHit?"-":man(p.remain)}</td><td>${p.eff.map(e=>p.hit[e]?`<span class="tag ok2">${e} ✓</span>`:"").join("")||`<span class="tag no">미달</span>`}</td></tr>`).join("")}</tbody></table>${list.length>400?`<div class="empty">상위 400명만 표시했습니다. 조건을 좁혀 주세요.</div>`:""}`:`<div class="empty">조건에 맞는 사용인이 없습니다.</div>`);
   const p=selCode&&all.find(x=>x.code===selCode);
   $("#side").innerHTML=p?`<h3>${esc(p.name)}</h3><div class="mu">${esc(p.agency)}</div>
-    <div class="kv"><span>코드</span><span>${esc(p.code)}</span><span>지점</span><span>${bshort(p.branch)} · 지점장 ${esc(p.head)}</span><span>매니저</span><span>${esc(p.mgr)}${p.center!=="미지정"?" ("+esc(p.center)+" 센터장)":""}</span><span>목표 구간</span><span>${p.eff.map(e=>`<span class="tag ${e==="20만 이상"?"t20":""}">${e}</span>`).join("")}</span><span>실적계</span><span><b>${won(p.perf)}원</b> (${p.cnt}건)</span></div>
+    <div class="kv"><span>코드</span><span>${esc(p.code)}</span><span>지점</span><span>${bshort(p.branch)} · 지점장 ${esc(p.head)}</span><span>매니저</span><span>${esc(p.mgr)}${p.center!=="미지정"?" ("+esc(p.center)+" 센터장)":""}</span><span>목표 구간</span><span>${p.eff.map(e=>`<span class="tag ${e==="20만 이상"?"t20":""}">${e}</span>`).join("")}</span><span>주차별 실적</span><span>${wk.map(i=>`${i+1}주차 ${won(p.w[i])}원`).join("<br>")||"-"}</span><span>실적 합계</span><span><b>${won(p.perf)}원</b> (${p.cnt}건)</span></div>
     ${p.eff.map(e=>{const pc=Math.min(100,Math.round(p.perf/TH[e]*100));return `<div style="margin-top:10px"><b>${e}</b> <span class="mu">기준 ${won(TH[e])}원</span> ${p.hit[e]?`<span class="ok">✓ 달성</span>`:`<span class="tag no">${man(TH[e]-p.perf)} 남음</span>`}<div class="bar ${p.hit[e]?"g":""}"><i style="width:${pc}%"></i></div></div>`}).join("")}`
     :`<div class="empty">목록에서 사용인을 선택하면 상세가 표시됩니다</div>`;
   mgrNote(base);
@@ -365,7 +366,7 @@ async function fetchAll(table,cols){
 async function load(){
   try{
     const [t,p,m]=await Promise.all([fetchAll("goal_targets"),fetchAll("goal_perf"),sb.from("goal_meta").select("*").eq("id","main").maybeSingle()]);
-    targets=t;perf=new Map(p.map(r=>[r.code,{perf:+r.perf||0,cnt:r.cnt||0}]));meta=m.data;
+    targets=t;perf=new Map(p.map(r=>[r.code,{perf:+r.perf||0,cnt:r.cnt||0,w:[+r.w1||0,+r.w2||0,+r.w3||0,+r.w4||0,+r.w5||0]}]));meta=m.data;
     $("#notice").hidden=true;
   }catch(e){$("#notice").hidden=false;$("#notice").textContent="서버에서 자료를 불러오지 못했습니다. 수퍼베이스에서 goal.sql 을 실행했는지 확인해 주세요.";targets=[]}
   cmap=new Map();
@@ -422,7 +423,9 @@ function parseWorkbook(wb){
   const hb=b.findIndex(r=>cl(r[0]).includes("영업가족")&&r.some(c=>cl(c)==="실적계"));
   if(hb<0)throw new Error("「집계현황」 시트에서 영업가족조직코드·실적계 제목 줄을 찾지 못했습니다.");
   const HB=b[hb].map(cl),zi=HB.indexOf("실적계"),yi=HB.indexOf("건수계"),P=new Map();
-  b.slice(hb+1).forEach(r=>{const code=cl(r[0]);if(!code)return;P.set(code,{code,perf:Number(String(r[zi]).replace(/,/g,""))||0,cnt:yi>=0?(Number(r[yi])||0):0})});
+  const wi=[1,2,3,4,5].map(n=>{const i=HB.findIndex(x=>x.includes(n+"주차")&&x.includes("실적"));return i>=0?i:18+n});   // 제목이 없으면 T~X 열(1~5주차)
+  const wn=r=>wi.map(i=>Number(String(r[i]??"").replace(/,/g,""))||0);
+  b.slice(hb+1).forEach(r=>{const code=cl(r[0]);if(!code)return;{const w=wn(r);P.set(code,{code,perf:Number(String(r[zi]).replace(/,/g,""))||0,cnt:yi>=0?(Number(r[yi])||0):0,w1:w[0],w2:w[1],w3:w[2],w4:w[3],w5:w[4]})}});
   return {t:[...T.values()],p:[...P.values()]};
 }
 async function chunked(table,rows){for(let i=0;i<rows.length;i+=500){const {error}=await sb.from(table).insert(rows.slice(i,i+500));if(error)throw error}}
@@ -439,7 +442,7 @@ async function upload(file){
     await chunked("goal_targets",t);await chunked("goal_perf",p);
     r=await sb.from("goal_meta").upsert({id:"main",updated_at:new Date().toISOString(),updated_by:me,file_name:file.name,target_rows:t.length,perf_rows:p.length});if(r.error)throw r.error;
     toast("올렸습니다");await load();
-  }catch(e){alert("올리지 못했습니다.\n"+(e&&e.message?e.message:"잠시 후 다시 시도해 주세요."));load()}
+  }catch(e){alert("올리지 못했습니다.\n"+(e&&e.message?e.message:"잠시 후 다시 시도해 주세요.")+(/w[1-5]|column/i.test((e&&e.message)||"")?"\n\n수퍼베이스 SQL Editor에서 goal-weeks.sql 을 한 번 실행해 주세요(주차별 실적 저장 칸 추가).":""));load()}
 }
 
 document.addEventListener("click",e=>{
